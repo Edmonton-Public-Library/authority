@@ -5,8 +5,8 @@
 # Purpose:
 # Method:
 #
-#<one line to give the program's name and a brief idea of what it does.>
-#    Copyright (C) 2013  Andrew Nisbet
+# Compares a update authority file against existing authorities.
+#    Copyright (C) 2014  Andrew Nisbet
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
+my $UPDATE     = ""; # The authority file to report on. 
 my $VERSION    = qq{0.0};
 
 #
@@ -51,12 +52,12 @@ sub usage()
 {
     print STDERR << "EOF";
 
-	usage: $0 [-x]
-Usage notes for authority.pl.
+	usage: cat <file.flat> \| $0 [options]
+authority.pl reports on the potential match points for authority updates.
 
  -x: This (help) message.
 
-example: $0 -x
+example: $0 -a"current.flat" -i"update.flat"
 Version: $VERSION
 EOF
     exit;
@@ -72,6 +73,47 @@ sub init
     usage() if ( $opt{'x'} );
 }
 
-init();
+# Updates counts on marc record.
+# param:  hash reference of statistics.
+# param:  MARC Record lines as list.
+# return: none.
+sub computeScore
+{
+	my $stats = shift;
+	foreach my $line (@_)
+	{
+		if ( $line =~ m/\.001\./ )
+		{
+			$stats->{'001'}++;
+		}
+		elsif ( $line =~ m/\.016\./ )
+		{
+			$stats->{'016'}++;
+		}	
+	}
+}
 
+init();
+my @marcRecord = ();
+my $stats = {};
+while(<>)
+{
+	# Marks the start of a new MARC boundary
+	if (m/\*\*\* DOCUMENT BOUNDARY \*\*\*/) 
+	{
+		$stats->{'count'}++;
+		computeScore( $stats, @marcRecord ) if ( scalar( @marcRecord ) > 0 );
+		@marcRecord = ();
+	}
+	push @marcRecord, $_;
+}
+print "Analysis:\n";
+while( my ($k, $v) = each %$stats ) 
+{
+	format STDOUT =
+@<<<<<<<  @>>>>>>
+$k,$v
+.
+	write;
+}
 # EOF

@@ -28,7 +28,7 @@
 PRODUCTION_SERVER=eplapp.library.ualberta.ca
 TEST_SERVER=edpl-t.library.ualberta.ca
 USER=sirsi
-REMOTE=~/Unicorn/EPLwork/anisbet/
+REMOTE=~/Unicorn/EPLwork/anisbet/Authorities/
 LOCAL=~/projects/authority/
 APP=authority.pl
 ARGS=-x

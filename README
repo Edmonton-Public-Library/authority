@@ -7,6 +7,7 @@ Instructions for Running:
 ./authority
 
 Product Description:
+This script validates flat authority marc files.
 Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
 
 Repository Information:
