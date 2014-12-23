@@ -291,7 +291,7 @@ sub process
 		}
 		else
 		{
-			print STDERR "check:'$authId' in \$PRE_LOAD\n";
+			# print STDERR "check:'$authId' in \$PRE_LOAD\n";
 			if ( defined $PRE_LOAD->{ $authId } )
 			{
 				$stats->{'match'}++;
@@ -335,4 +335,5 @@ $k,$v
 .
 	write;
 }
+printf( "match: %0.2f\%\n", ($stats->{'match'} / $stats->{'update-auth count'}) * 100) if ( $stats->{'match'} && $stats->{'update-auth count'});
 # EOF
