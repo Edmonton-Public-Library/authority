@@ -17,4 +17,311 @@ Dependencies:
 None
 
 Known Issues:
-None
+The investigations are as follows.
+I cannot find any connection between the authorities that were loaded and those the authority ids we have in the system.
+Let us break the problem down by focusing on a NAME authority returned from BSLW:
+
+$ grep "Leonard Williams" *.flat
+ALLAUTHORITIES.flat:.100. 1 |aLevy, Leonard Williams,|d1923-
+ALLAUTHORITIES.flat:.400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
+BIB.flat:.100. 1 |aLevy, Leonard Williams,|d1923-
+NAME.flat:.100. 1 |aLevy, Leonard Williams,|d1923-
+NAME.flat:.400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
+
+== snip ==
+*** DOCUMENT BOUNDARY ***
+FORM=PERSONAL
+.000. |az n 0n
+.001. |a000000193160
+.003. |aCaOOAMICUS
+.005. |a20091210235959
+.008. |a200912nxbacnnnaabn           a aaa     |
+.040.   |aCaOOP|bnnn|cCaOOP
+.100. 1 |aLevy, Leonard Williams,|d1923-
+.400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
+.670.   |aHis  Emergence of a free press.
+.670.   |aLCNA 1977-1984.
+*** DOCUMENT BOUNDARY ***
+== snip ==
+or from marc edit:
+== snip ==
+=LDR  00380nz   2200133n  4500
+=001  000000193160
+=003  CaOOAMICUS
+=005  20091210235959
+=008  200912nxbacnnnaabn\\\\\\\\\\\a\aaa\\\\\|
+=040  \\$aCaOOP$bnnn$cCaOOP
+=100  1\$aLevy, Leonard Williams,$d1923-
+=400  1\$wna$aLevy, Leonard W.$q(Leonard Williams),$d1923-
+=670  \\$aHis  Emergence of a free press.
+=670  \\$aLCNA 1977-1984.
+== snip ==
+
+So let us have a look at the record in Workflows:
+Authority ID:	        000000193160
+Record format:	        Personal name headings
+Source:	                CaOOP
+Date authorized:	    NEVER
+Authorization level:	AUTHORIZED
+Date created:	        4/18/2014
+Created by:	            -Q20140418
+Date modified:	        NEVER
+Modified by:	        ADMIN
+Previously modified by:
+
+And in marc record:
+Tag	Ind.	Contents
+000	 	*****nz**********n******
+001	 	000000193160
+003	 	CaOOAMICUS
+005	 	20091210235959
+008	 	200912nx*acnnnaabn********** a*aaa**** |
+040		CaOOP|bnnn|cCaOOP
+100	1	Levy, Leonard Williams,|d1923-
+400	1	|wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
+670		His Emergence of a free press.
+670		LCNA 1977-1984.
+
+Earlier I created a list of all our authority keys and ids with:
+ selauthority -oKF > AllAuthKeysAndIDs.lst
+so:
+grep 000000193160 AllAuthKeysAndIDs.lst
+558724|000000193160    |
+
+therefore:
+
+echo 558724 | authdump
+Symphony $<authority:u> $<dump> 3.4.1 $<started_on> $<tuesday:u>, $<december:u> 23, 2014, 11:30 AM
+$(9031)
+$(9162)
+*** DOCUMENT BOUNDARY ***
+FORM=PERSONAL
+.000. |az n 0n
+.001. |a000000193160
+.003. |aCaOOAMICUS
+.005. |a20091210235959
+.008. |a200912nxbacnnnaabn           a aaa     |
+.040. |aCaOOP|bnnn|cCaOOP
+.100. 1 |aLevy, Leonard Williams,|d1923-
+.400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
+.670. |aHis  Emergence of a free press.
+.670. |aLCNA 1977-1984.
+  1 $<authority> $(1303)
+Symphony $<authority:u> $<dump> $<finished_on> $<tuesday:u>, $<december:u> 23, 2014, 11:30 AM
+
+if we isolate the dumped record and the flat file provided from BSLW here is what we get:
+diff Levy_DUMP.flat Levy_BSLW.flat
+2,12c2,12
+< FORM=PERSONAL
+< .000. |az n 0n
+< .001. |a000000193160
+< .003. |aCaOOAMICUS
+< .005. |a20091210235959
+< .008. |a200912nxbacnnnaabn           a aaa     |
+< .040. |aCaOOP|bnnn|cCaOOP
+< .100. 1 |aLevy, Leonard Williams,|d1923-
+< .400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
+< .670. |aHis  Emergence of a free press.
+< .670. |aLCNA 1977-1984.
+---
+> FORM=PERSONAL
+> .000. |az n 0n
+> .001. |a000000193160
+> .003. |aCaOOAMICUS
+> .005. |a20091210235959
+> .008. |a200912nxbacnnnaabn           a aaa     |
+> .040.   |aCaOOP|bnnn|cCaOOP
+> .100. 1 |aLevy, Leonard Williams,|d1923-
+> .400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
+> .670.   |aHis  Emergence of a free press.
+> .670.   |aLCNA 1977-1984.
+
+Meaning that the flat files are completely different on every line. Since we do not see
+any difference visually lets take a look at the binary files:
+
+Viewing the binary version of the flat file dumped from Symphony we see:
+cat Levy_DUMP.flat | od -a
+0000000   *   *   *  sp   D   O   C   U   M   E   N   T  sp   B   O   U
+0000020   N   D   A   R   Y  sp   *   *   *  nl   F   O   R   M   =   P
+0000040   E   R   S   O   N   A   L  nl   .   0   0   0   .  sp   |   a
+0000060   z  sp   n  sp   0   n  nl   .   0   0   1   .  sp   |   a   0
+0000100   0   0   0   0   0   1   9   3   1   6   0  nl   .   0   0   3
+0000120   .  sp   |   a   C   a   O   O   A   M   I   C   U   S  nl   .
+0000140   0   0   5   .  sp   |   a   2   0   0   9   1   2   1   0   2
+0000160   3   5   9   5   9  nl   .   0   0   8   .  sp   |   a   2   0
+0000200   0   9   1   2   n   x   b   a   c   n   n   n   a   a   b   n
+0000220  sp  sp  sp  sp  sp  sp  sp  sp  sp  sp  sp   a  sp   a   a   a
+0000240  sp  sp  sp  sp  sp   |  nl   .   0   4   0   .  sp   |   a   C
+0000260   a   O   O   P   |   b   n   n   n   |   c   C   a   O   O   P
+0000300  nl   .   1   0   0   .  sp   1  sp   |   a   L   e   v   y   ,
+0000320  sp   L   e   o   n   a   r   d  sp   W   i   l   l   i   a   m
+0000340   s   ,   |   d   1   9   2   3   -  nl   .   4   0   0   .  sp
+0000360   1  sp   |   w   n   a   |   a   L   e   v   y   ,  sp   L   e
+0000400   o   n   a   r   d  sp   W   .   |   q   (   L   e   o   n   a
+0000420   r   d  sp   W   i   l   l   i   a   m   s   )   ,   |   d   1
+0000440   9   2   3   -  nl   .   6   7   0   .  sp   |   a   H   i   s
+0000460  sp  sp   E   m   e   r   g   e   n   c   e  sp   o   f  sp   a
+0000500  sp   f   r   e   e  sp   p   r   e   s   s   .  nl   .   6   7
+0000520   0   .  sp   |   a   L   C   N   A  sp   1   9   7   7   -   1
+0000540   9   8   4   .  nl
+0000545
+---
+cat Levy_BSLW.flat | od -a
+0000000   *   *   *  sp   D   O   C   U   M   E   N   T  sp   B   O   U
+0000020   N   D   A   R   Y  sp   *   *   *  nl   F   O   R   M   =   P
+0000040   E   R   S   O   N   A   L  sp  nl   .   0   0   0   .  sp   |
+0000060   a   z  sp   n  sp   0   n  sp  nl   .   0   0   1   .  sp   |
+0000100   a   0   0   0   0   0   0   1   9   3   1   6   0  sp  nl   .
+0000120   0   0   3   .  sp   |   a   C   a   O   O   A   M   I   C   U
+0000140   S  sp  nl   .   0   0   5   .  sp   |   a   2   0   0   9   1
+0000160   2   1   0   2   3   5   9   5   9  sp  nl   .   0   0   8   .
+0000200  sp   |   a   2   0   0   9   1   2   n   x   b   a   c   n   n
+0000220   n   a   a   b   n  sp  sp  sp  sp  sp  sp  sp  sp  sp  sp  sp
+0000240   a  sp   a   a   a  sp  sp  sp  sp  sp   |  sp  nl   .   0   4
+0000260   0   .  sp  sp  sp   |   a   C   a   O   O   P   |   b   n   n
+0000300   n   |   c   C   a   O   O   P  sp  nl   .   1   0   0   .  sp
+0000320   1  sp   |   a   L   e   v   y   ,  sp   L   e   o   n   a   r
+0000340   d  sp   W   i   l   l   i   a   m   s   ,   |   d   1   9   2
+0000360   3   -  sp  nl   .   4   0   0   .  sp   1  sp   |   w   n   a
+0000400   |   a   L   e   v   y   ,  sp   L   e   o   n   a   r   d  sp
+0000420   W   .   |   q   (   L   e   o   n   a   r   d  sp   W   i   l
+0000440   l   i   a   m   s   )   ,   |   d   1   9   2   3   -  sp  nl
+0000460   .   6   7   0   .  sp  sp  sp   |   a   H   i   s  sp  sp   E
+0000500   m   e   r   g   e   n   c   e  sp   o   f  sp   a  sp   f   r
+0000520   e   e  sp   p   r   e   s   s   .  sp  nl   .   6   7   0   .
+0000540  sp  sp  sp   |   a   L   C   N   A  sp   1   9   7   7   -   1
+0000560   9   8   4   .  sp  nl
+0000566
+
+Notice how all the lines in the dump file contain:
+.   0   0   1   .  sp   |  a   0   0   0   0   0   0   1   9   3   1   6   0  nl
+and in BSLW contains:
+.   0   0   1   .  sp   |  a   0   0   0   0   0   0   1   9   3   1   6   0  sp  nl
+
+Technically the trailing empty space (not the nl) is part of the naming pattern.
+I am now going to test the effects of this with an experiment. I have modified
+the BSLW flat file with some minor edits and reloaded it.
+
+cat Levy_LOAD.flat | authload -fc -mu
+Symphony $<authority> $<load> 3.4.1 $<started_on> $<tuesday:u>, $<december:u> 23, 2014, 12:19 PM
+$(9180)
+$(11223)
+$(9186)
+$(9182)
+558724|
+  12 $(1401)
+  1 $<authority> $(1402)
+  0 $<authority> $(1403)
+  0 $<authority> $(1404)
+  1 $<authority> $(1405)
+Symphony $<authority> $<load> $<finished_on> $<tuesday:u>, $<december:u> 23, 2014, 12:19 PM
+bash-3.2$ echo 558724 | authdump
+Symphony $<authority:u> $<dump> 3.4.1 $<started_on> $<tuesday:u>, $<december:u> 23, 2014, 12:20 PM
+$(9031)
+$(9162)
+*** DOCUMENT BOUNDARY ***
+FORM=PERSONAL
+.000. |az n 0n
+.001. |a000000193160
+.003. |aCaOOAMICUS
+.005. |a20091210235959
+.008. |a200912nxbacnnnaabn           a aaa     |
+.040. |aCaOOP|bnnn|cCaOOP
+.100. 1 |aLevy, Leonard Williams,|d1923-
+.400. 1 |wna|aLevy, Leonard W.|q(Leonard Will.i.ams),|d1923-
+.670. |aHis  Emergence of a flea press.
+.670. |aLCNA 1977-1984.
+  1 $<authority> $(1303)
+Symphony $<authority:u> $<dump> $<finished_on> $<tuesday:u>, $<december:u> 23, 2014, 12:20 PM
+
+And the file matches so the conclusion is trailing white space has no effect on matching numeric authority ids.
+After some more testing and bug fixes I perform the following experiment.
+I preload all the authorities sent by BSLW. I then load the updated authorities for NAMEs with:
+
+cat test.flat | ./authority.pl -p"./total.flat"
+...
+**warning: ambiguous authority id, 001='n 2012048589', 016='1022H5849'
+Analysis:
+   update-auth count:     195
+      pre-auth count:  226285
+                 016:      38
+               match:       0
+                 001:     195
+Searching for 2012048589 in all the authority IDs we have loaded we find:
+grep 2012048589 AllAuthKeysAndIDs.lst
+800468|N2012048589     |
+It appears that Symphony has UC and removed white space from the authority ID on load.
+To test I create a flat file for myself:
+ cat andrew.flat
+*** DOCUMENT BOUNDARY ***
+FORM=PERSONAL
+.000. |az n 0n
+.001. |an ANDREW001
+.003. |aCaOOAMICUS
+.005. |a20091210235959
+.008. |a200912nxbacnnnaabn           a aaa     |
+.040.   |aCaOOP|bnnn|cCaOOP
+.100. 1 |aNisbet, Leonard Williams,|d1923-
+.400. 1 |wna|aNisbet, Leonard W.|q(Leonard Will.i.ams),|d1923-
+.670.   |aHis  Emergence of a flea press.
+.670.   |aLCNA 1977-1984.
+
+and load
+cat andrew.flat | authload -fc -mb
+Symphony $<authority> $<load> 3.4.1 $<started_on> $<tuesday:u>, $<december:u> 23, 2014, 1:35 PM
+$(9180)
+$(11224)
+$(9186)
+$(9182)
+903430|
+  12 $(1401)
+  1 $<authority> $(1402)
+  0 $<authority> $(1403)
+  1 $<authority> $(1404)
+  0 $<authority> $(1405)
+Symphony $<authority> $<load> $<finished_on> $<tuesday:u>, $<december:u> 23, 2014, 1:35 PM
+
+
+
+search for 'NANDREW001' and find:
+000	 	*****nz**********n******
+001	 	n ANDREW001
+003	 	CaOOAMICUS
+005	 	20091210235959
+008	 	200912nx*acnnnaabn********** a*aaa**** |
+040		CaOOP|bnnn|cCaOOP
+100	1	Nisbet, Leonard Williams,|d1923-
+400	1	|wna|aNisbet, Leonard W.|q(Leonard Will.i.ams),|d1923-
+670		His Emergence of a flea press.
+670		LCNA 1977-1984.
+A search for 'n ANDREW001' fails.
+I modify the file to 
+*** DOCUMENT BOUNDARY ***
+FORM=PERSONAL
+.000. |az n 0n
+.001. |aNANDREW001
+.003. |aCaOOAMICUS
+.005. |a20091210235959
+.008. |a200912nxbacnnnaabn           a aaa     |
+.040.   |aCaOOP|bnnn|cCaOOP
+.100. 1 |aNisbet, Leonard Williams,|d1923-
+.400. 1 |wna|aNisbet, Leonard W.|q(Leonard Will.i.ams),|d1923-
+.670.   |aHis  Emergence of a flea press.
+.670.   |aLCNA 1977-1984.
+
+cat andrew.flat | authload -fc -mb
+Symphony $<authority> $<load> 3.4.1 $<started_on> $<tuesday:u>, $<december:u> 23, 2014, 1:40 PM
+$(9180)
+$(11224)
+$(9186)
+$(9182)
+903430|
+  12 $(1401)
+  1 $<authority> $(1402)
+  0 $<authority> $(1403)
+  0 $<authority> $(1404)
+  1 $<authority> $(1405)
+  
+THE KEYS MATCH when I 'NANDREW001', 'n ANDREW001'
+
+
