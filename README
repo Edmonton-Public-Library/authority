@@ -323,5 +323,22 @@ $(9182)
   1 $<authority> $(1405)
   
 THE KEYS MATCH when I 'NANDREW001', 'n ANDREW001'
+...
+typical id without processing:'nr 98023852' 
+...
+Analysis:
+   update-auth count:     195
+      pre-auth count:  384994
+                 016:      38
+               match:      19
+                 001:     195
 
-
+...
+typical id with processing:'NR98023852'
+...
+Analysis:
+   update-auth count:     195
+      pre-auth count:  384994
+                 016:      38
+               match:     194
+                 001:     195

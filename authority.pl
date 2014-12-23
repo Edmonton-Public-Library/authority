@@ -59,6 +59,7 @@ authority.pl reports on the potential match points for authority updates.
 
  -c      : Compress.
  -p<file>: Pre-load an authority file to test how closely the input matches.
+ -t<file>: Test results if pre-load is taken from 'selauthority -oK \| authdump -ki035'.
  -x      : This (help) message.
 
 example: cat update.flat | $0 -p"current.flat"
@@ -119,6 +120,7 @@ sub getAuthId
 	if ( $t001 ne "" && $t016 ne "" && $t001 ne $t016 )
 	{
 		print STDERR "**warning: ambiguous authority id, 001='$t001', 016='$t016'\n";
+		$stats->{'ambiguous ID'}++;
 	}
 	return ( $authId, $tag );
 }
@@ -128,7 +130,7 @@ sub getAuthId
 # return: 
 sub init
 {
-    my $opt_string = 'cp:x';
+    my $opt_string = 'cp:t:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	if ( $opt{'p'} )
@@ -180,6 +182,29 @@ sub init
 		{
 			print STDERR "**error: -p selected, but file is missing or empty.\n";
 			usage();
+		}
+	} # End -p
+	elsif ( $opt{'t'} ) # use '-p', or '-t'.
+	{
+		# Initialize the counter for matches. If anything fails we still get valid '0'.
+		$stats->{'match'} = 0;
+		my $pre_auth = $opt{'t'};
+		if ( -s $pre_auth )
+		{
+			open AUTH_FILE, "<$pre_auth" or die "**error opening '$pre_auth', $!\n";
+			while (<AUTH_FILE>)
+			{
+				my @record = split( '\|', $_ );
+				# The key will be in the second field.
+				if ( defined $record[1] )
+				{
+					$stats->{'pre-auth count'}++;
+					my $authId = trim( $record[1] );
+					# print STDERR "'$authId'\n";
+					$PRE_LOAD->{ $authId } = $record[0];
+				}
+			}
+			close AUTH_FILE;
 		}
 	}
 }
@@ -257,7 +282,7 @@ sub process
 	my @marcRecord = clean( @_ );
 	computeScore( $stats, @marcRecord );
 	# Test against the 'p're loaded authorities.
-	if ( $opt{'p'} )
+	if ( $opt{'p'} || $opt{'t'} )
 	{
 		my ( $authId, $tag ) = getAuthId( @marcRecord );
 		if ( $authId eq "" )
@@ -266,7 +291,7 @@ sub process
 		}
 		else
 		{
-			# print STDERR "check:'$authId' in \$PRE_LOAD\n";
+			print STDERR "check:'$authId' in \$PRE_LOAD\n";
 			if ( defined $PRE_LOAD->{ $authId } )
 			{
 				$stats->{'match'}++;
