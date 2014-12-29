@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.2 - Update comments and add flat file cleaning. 
 #          0.1 - Done testing. 
 #          0.0 - Dev. 
 #
@@ -44,7 +45,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.1};
+my $VERSION    = qq{0.2};
 
 my $stats = {};
 
@@ -59,17 +60,26 @@ sub usage()
 authority.pl reports on the potential match points for authority updates.
 
  -c      : Compress.
+ -f      : Write output to standard out. Only works on data from standard in.
  -p<file>: Pre-load an authority file to test how closely the input matches.
  -t<file>: Test results if pre-load is taken from 'selauthority -oK \| authdump -ki035'.
+           The input file looks like '518203|XX518203        |', 
+           authority key and authority ID separated by pipes.
  -x      : This (help) message.
 
-example: cat update.flat | $0 -p"current.flat"
+examples : 
+ cat update.flat | $0 -p"current.flat"
+ cat update.flat | $0 -tAllAuthKeysAndIDs.lst
+ cat update.flat | $0 -f \> fixed_authorities.flat
 Version: $VERSION
 EOF
     exit;
 }
 
-
+# Compression refers to removing white space and normalizing all
+# alphabetic characters into upper case.
+# param:  any string.
+# return: input string with spaces removed and in upper case.
 sub compress( $ )
 {
 	my $line = shift;
@@ -93,6 +103,7 @@ sub getAuthIDField( $ )
 	}
 	return "";
 }
+
 # Goes through the flat record and parses out the authid.
 # param:  array of MARC tags.
 # return: <none>
@@ -120,7 +131,7 @@ sub getAuthId
 	}
 	if ( $t001 ne "" && $t016 ne "" && $t001 ne $t016 )
 	{
-		print STDERR "**warning: ambiguous authority id, 001='$t001', 016='$t016'\n";
+		print STDERR "*warning: ambiguous authority id, 001='$t001', 016='$t016'\n";
 		$stats->{'ambiguous ID'}++;
 	}
 	return ( $authId, $tag );
@@ -131,7 +142,7 @@ sub getAuthId
 # return: 
 sub init
 {
-    my $opt_string = 'cp:t:x';
+    my $opt_string = 'cfp:t:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	if ( $opt{'p'} )
@@ -227,10 +238,16 @@ sub trim( $ )
 sub clean
 {
 	my @record = ();
+	my ( $authId, $tag ) = getAuthId( @_ );
 	foreach my $line ( @_ )
 	{
-		# print STDOUT trim( $line ) . "\n";
-		push @record, trim( $line );
+		if ( $line =~ m/\.($tag)\.\s+\|a/ )
+		{
+			$line = $& . $authId;
+		}
+		# $line = trim( $line ); # Trimming the line has no effect on flat load.
+		print STDOUT $line . "\n" if ( $opt{'f'} ); # Write to stdout if requested.
+		push @record, $line;
 	}
 	return @record;
 }
@@ -297,6 +314,10 @@ sub process
 			{
 				$stats->{'match'}++;
 			}
+			else
+			{
+				print STDERR "*warning: failed to match '$authId'\n";
+			}
 		}
 	}
 }
@@ -320,21 +341,22 @@ while(<>)
 	}
 	push @marcRecord, $_;
 }
-# The last iteration of the loop has data but no document marker.
+# The last iteration of the loop has data but no document marker to terminate it
+# So do any data that may be left over from processing.
 if ( scalar( @marcRecord ) > 0 )
 {
 	process( @marcRecord );
 }
 #########
 # Output
-print "Analysis:\n";
+print STDERR "Analysis:\n";
 while( my ($k, $v) = each %$stats ) 
 {
-	format STDOUT =
+	format STDERR =
 @>>>>>>>>>>>>>>>>>>>: @>>>>>>
 $k,$v
 .
-	write;
+	write STDERR;
 }
-printf( "percent match: %0.2f\n", ($stats->{'match'} / $stats->{'update-auth count'}) * 100) if ( $stats->{'match'} && $stats->{'update-auth count'});
+print STDERR sprintf( "percent match: %0.2f\n", ($stats->{'match'} / $stats->{'update-auth count'}) * 100) if ( $stats->{'match'} && $stats->{'update-auth count'});
 # EOF
