@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.4 - Added missing check for -t file. 
 #          0.3 - Changed -f flag to -o for consistency. 
 #          0.2 - Update comments and add flat file cleaning. 
 #          0.1 - Done testing. 
@@ -46,7 +47,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.3};
+my $VERSION    = qq{0.4};
 
 my $stats = {};
 
@@ -218,6 +219,11 @@ sub init
 				}
 			}
 			close AUTH_FILE;
+		}
+		else
+		{
+			print STDERR "**error: -t selected, but file is missing or empty.\n";
+			usage();
 		}
 	}
 }
