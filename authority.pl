@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.3 - Changed -f flag to -o for consistency. 
 #          0.2 - Update comments and add flat file cleaning. 
 #          0.1 - Done testing. 
 #          0.0 - Dev. 
@@ -45,7 +46,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.2};
+my $VERSION    = qq{0.3};
 
 my $stats = {};
 
@@ -60,7 +61,7 @@ sub usage()
 authority.pl reports on the potential match points for authority updates.
 
  -c      : Compress.
- -f      : Write output to standard out. Only works on data from standard in.
+ -o      : Write output to standard out. Only works on data from standard in.
  -p<file>: Pre-load an authority file to test how closely the input matches.
  -t<file>: Test results if pre-load is taken from 'selauthority -oK \| authdump -ki035'.
            The input file looks like '518203|XX518203        |', 
@@ -70,7 +71,7 @@ authority.pl reports on the potential match points for authority updates.
 examples : 
  cat update.flat | $0 -p"current.flat"
  cat update.flat | $0 -tAllAuthKeysAndIDs.lst
- cat update.flat | $0 -f \> fixed_authorities.flat
+ cat update.flat | $0 -o \> fixed_authorities.flat
 Version: $VERSION
 EOF
     exit;
@@ -142,7 +143,7 @@ sub getAuthId
 # return: 
 sub init
 {
-    my $opt_string = 'cfp:t:x';
+    my $opt_string = 'cop:t:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	if ( $opt{'p'} )
