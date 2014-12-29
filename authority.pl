@@ -60,6 +60,10 @@ sub usage()
 
 	usage: cat <file.flat> \| $0 [options]
 authority.pl reports on the potential match points for authority updates.
+It reports how closely an arbitrary flat file matches pre-existing authority
+files. It also can repair files to improve authority matches and overcome 
+Symphony's authority tools' short comings. When authorities are originally
+loaded, any spaces are removed and alpha characters are upper cased.
 
  -c      : Compress.
  -o      : Write output to standard out. Only works on data from standard in.
