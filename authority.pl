@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.7 - Fix usage. 
 #          0.6 - Verbose messaging. 
 #          0.5 - Added count of not matched Auth IDs. 
 #          0.4 - Added missing check for -t file. 
@@ -49,7 +50,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.6};
+my $VERSION    = qq{0.7};
 
 my $stats = {};
 
@@ -70,7 +71,7 @@ loaded, any spaces are removed and alpha characters are upper cased.
  -c      : Compress.
  -o      : Write output to standard out. Only works on data from standard in.
  -p<file>: Pre-load an authority file to test how closely the input matches.
- -t<file>: Test results if pre-load is taken from 'selauthority -oK \| authdump -ki035'.
+ -t<file>: Test results if pre-load is taken from 'selauthority -oKF \> AllAuthKeysAndIDs.lst'.
            The input file looks like '518203|XX518203        |', 
            authority key and authority ID separated by pipes.
  -v<all|..> : Verbose messages, anything other than 'all' doesn't report failed matches.
