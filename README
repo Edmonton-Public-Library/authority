@@ -342,3 +342,37 @@ Analysis:
                  016:      38
                match:     194
                  001:     195
+
+				 
+				 
+=============================
+
+Loading
+
+Once fixed loading takes place with:
+  cat NAME.CHG.mrc.fix.flat | authload -fc -mb
+which overlays matching records matching on 001 (-fc) and update if possible, and create otherwise (-mb)
+ ...
+ 907123|
+ 907124|
+**Entry ID not found in format:  entry = 024 format = PERSONAL
+*** DOCUMENT BOUNDARY ***
+FORM=PERSONAL
+.000. |az n 0c
+.001. |aNO2008020240
+.003. |aDLC
+.005. |a20140925091617.0
+.008. |a080206n| azannaabn          |a aaa     c
+.010.   |ano2008020240|znr 92044064
+ 611191|
+ ...
+ 907163|
+ 220997 $(1401)
+  11230 $<authority> $(1402)
+  78 $<authority> $(1403)
+  3733 $<authority> $(1404)
+  7497 $<authority> $(1405)
+Symphony $<authority> $<load> $<finished_on> $<tuesday:u>, $<december:u> 30, 2014, 10:46 AM
+
+
+ 

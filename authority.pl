@@ -26,6 +26,8 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.6 - Verbose messaging. 
+#          0.5 - Added count of not matched Auth IDs. 
 #          0.4 - Added missing check for -t file. 
 #          0.3 - Changed -f flag to -o for consistency. 
 #          0.2 - Update comments and add flat file cleaning. 
@@ -47,7 +49,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.4};
+my $VERSION    = qq{0.6};
 
 my $stats = {};
 
@@ -71,6 +73,8 @@ loaded, any spaces are removed and alpha characters are upper cased.
  -t<file>: Test results if pre-load is taken from 'selauthority -oK \| authdump -ki035'.
            The input file looks like '518203|XX518203        |', 
            authority key and authority ID separated by pipes.
+ -v<all|..> : Verbose messages, anything other than 'all' doesn't report failed matches.
+           Updates may have lots.
  -x      : This (help) message.
 
 examples : 
@@ -110,9 +114,10 @@ sub getAuthIDField( $ )
 	return "";
 }
 
-# Goes through the flat record and parses out the authid.
+# Goes through the flat record and parses out the authid. Reports ambiguous 
+# authority IDs but always prefers 001.
 # param:  array of MARC tags.
-# return: <none>
+# return: (authority id, tag) where tag is always 001.
 sub getAuthId
 {
 	my $authId = "";
@@ -137,7 +142,7 @@ sub getAuthId
 	}
 	if ( $t001 ne "" && $t016 ne "" && $t001 ne $t016 )
 	{
-		print STDERR "*warning: ambiguous authority id, 001='$t001', 016='$t016'\n";
+		print STDERR "*warning: ambiguous authority id, 001='$t001', 016='$t016'\n" if ( $opt{'v'} );
 		$stats->{'ambiguous ID'}++;
 	}
 	return ( $authId, $tag );
@@ -148,7 +153,7 @@ sub getAuthId
 # return: 
 sub init
 {
-    my $opt_string = 'cop:t:x';
+    my $opt_string = 'cop:t:v:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	if ( $opt{'p'} )
@@ -170,7 +175,7 @@ sub init
 						my ( $authId, $tag ) = getAuthId( @marcRecord );
 						if ( $authId eq "" )
 						{
-							$stats->{'pa_no_auth_id'}++;
+							$stats->{'pre-auth no ID'}++;
 						}
 						else
 						{
@@ -188,7 +193,7 @@ sub init
 				my ( $authId, $tag ) = getAuthId( @marcRecord );
 				if ( $authId eq "" )
 				{
-					$stats->{'pa_no_auth_id'}++;
+					$stats->{'pre-auth no ID'}++;
 				}
 				else
 				{
@@ -218,7 +223,6 @@ sub init
 				{
 					$stats->{'pre-auth count'}++;
 					my $authId = trim( $record[1] );
-					# print STDERR "'$authId'\n";
 					$PRE_LOAD->{ $authId } = $record[0];
 				}
 			}
@@ -257,7 +261,7 @@ sub clean
 			$line = $& . $authId;
 		}
 		# $line = trim( $line ); # Trimming the line has no effect on flat load.
-		print STDOUT $line . "\n" if ( $opt{'f'} ); # Write to stdout if requested.
+		print STDOUT $line . "\n" if ( $opt{'o'} ); # Write to stdout if requested.
 		push @record, $line;
 	}
 	return @record;
@@ -291,9 +295,9 @@ sub computeScore
 	foreach my $line (@_)
 	{
 		chomp $line;
-		if ( $line =~ m/\s$/ )
+		if ( $line =~ m/FORM=/ )
 		{
-			$stats->{'trailing white space'}++;
+			$stats->{$'}++;
 		}
 		if ( $line =~ m/\.001\./ )
 		{
@@ -316,7 +320,7 @@ sub process
 		my ( $authId, $tag ) = getAuthId( @marcRecord );
 		if ( $authId eq "" )
 		{
-			$stats->{'up_no_auth_id'}++;
+			$stats->{'update w/o auth id'}++;
 		}
 		else
 		{
@@ -327,7 +331,8 @@ sub process
 			}
 			else
 			{
-				print STDERR "*warning: failed to match '$authId'\n";
+				print STDERR "*warning: failed to match '$authId'\n" if ( $opt{'v'} && $opt{'v'} eq "all" );
+				$stats->{'no match'}++;
 			}
 		}
 	}
