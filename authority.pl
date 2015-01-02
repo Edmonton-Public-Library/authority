@@ -26,6 +26,9 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.9 - Removed -c flag since we always want to check against normalized
+#                authority IDs, except when the input file is a flat file ('-f'). 
+#          0.8 - Output unmatched authority IDs untouched for create process. 
 #          0.7 - Fix usage. 
 #          0.6 - Verbose messaging. 
 #          0.5 - Added count of not matched Auth IDs. 
@@ -50,7 +53,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.7};
+my $VERSION    = qq{0.9};
 
 my $stats = {};
 
@@ -68,20 +71,47 @@ files. It also can repair files to improve authority matches and overcome
 Symphony's authority tools' short comings. When authorities are originally
 loaded, any spaces are removed and alpha characters are upper cased.
 
- -c      : Compress.
+When you get an authority back from the vendor, it is not always clear if it
+is a new authority or a change to an existing authority. This scripts manages
+both. If it detects that no authority exists in the current database, it leaves
+the vendor's supplied record unaltered for the create process, which will give 
+the authority an normalized authority ID and the vendor supplied 001 field. if the 
+authority is modified by the vendor, the normalized version is used to find the
+matching authority ID. authload then overlays all fields EXCEPT the 001 field.
+
+Example: Backstage will supply an authid of 'nr 4392G99045'. When we load, Symphony 
+will normalize it and its internal authority ID will be 'NR4392G99045'. 
+If the authority comes back with a modification we will do another comparison and 
+find that the normalized auth id exists, and its 001 is 'nr 4392G99045'.
+If we created with the normalized version the 001 field would mis-leadingly show 'NR4392G99045'.
+This would only be a problem if we had to back reference with BackStage, which has already happened.
+The goal is to separate and normalize the update records leaving the un-recognized records unaltered.
+This is safe except for when you don't compare with existing records. In that case the match rate drops
+to 9% on a good day, and the rest of the un-recognized authority IDs will be created.
+
+If you ran the script with -o but not -c, the input file and output file would be the same.
+If -c is selected, only authority IDs that are recognized on the system are normalized on
+output; unrecognized records are output unaltered.
+
  -o      : Write output to standard out. Only works on data from standard in.
- -p<file>: Pre-load an authority file to test how closely the input matches.
- -t<file>: Test results if pre-load is taken from 'selauthority -oKF \> AllAuthKeysAndIDs.lst'.
-           The input file looks like '518203|XX518203        |', 
-           authority key and authority ID separated by pipes.
+ -f<file>: Pre-load an authority flat file to test how closely the input matches,
+           otherwise pre-load comparison is taken from 'selauthority -oKF \> AllAuthKeysAndIDs.lst'.
+           The input file looks like '518203|XX518203        |', authority key and 
+           authority ID separated by pipes.
  -v<all|..> : Verbose messages, anything other than 'all' doesn't report failed matches.
            Updates may have lots.
  -x      : This (help) message.
 
 examples : 
  cat update.flat | $0 -p"current.flat"
- cat update.flat | $0 -tAllAuthKeysAndIDs.lst
  cat update.flat | $0 -o \> fixed_authorities.flat
+To create a flat file with best match for loading authority UPDATES (normalized 001) use:
+ cat new_changed_authorities.flat | $0 -o \> fixed_authorities.flat
+To create a flat file with best match for loading NEW authorities use:
+ cat new_changed_authorities.flat | $0 -o \> fixed_authorities.flat
+Same thing. You want to test New records for match first; should come back with 0 matches
+but if there are matches they will overlay, not create.
+
 Version: $VERSION
 EOF
     exit;
@@ -109,7 +139,7 @@ sub getAuthIDField( $ )
 	if ( defined $record[1] )
 	{
 		my $line = trim( $record[1] );
-		$line = compress( $line ) if ( $opt{'c'} );
+		$line = compress( $line );
 		return $line;
 	}
 	return "";
@@ -132,7 +162,6 @@ sub getAuthId
 		if ( m/\.001\./ )
 		{
 			$t001 = getAuthIDField( $_ );
-			# print STDERR "001='$t001' ";
 			$authId = $t001;
 			$tag = "001" if ( $t001 ne "" );
 		}
@@ -154,14 +183,14 @@ sub getAuthId
 # return: 
 sub init
 {
-    my $opt_string = 'cop:t:v:x';
+    my $opt_string = 'cof:v:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
-	if ( $opt{'p'} )
+	if ( $opt{'f'} )
 	{
 		# Initialize the counter for matches. If anything fails we still get valid '0'.
 		$stats->{'match'} = 0;
-		my $pre_auth = $opt{'p'};
+		my $pre_auth = $opt{'f'};
 		if ( -s $pre_auth )
 		{
 			my @marcRecord = ();
@@ -204,15 +233,18 @@ sub init
 		}
 		else
 		{
-			print STDERR "**error: -p selected, but file is missing or empty.\n";
+			print STDERR "**error: -f selected, but file is missing or empty.\n";
 			usage();
 		}
-	} # End -p
-	elsif ( $opt{'t'} ) # use '-p', or '-t'.
+	} # End -f
+	else # We will create a list of authority key|IDs| for comparison.
 	{
 		# Initialize the counter for matches. If anything fails we still get valid '0'.
 		$stats->{'match'} = 0;
-		my $pre_auth = $opt{'t'};
+		my $pre_auth = "AllAuthKeysAndIDs.lst";
+		print STDERR "creating list of current authority keys and IDs. This could take some time. ";
+		`selauthority -oKF 2>/dev/null > $pre_auth`;
+		print STDERR "done.\n";
 		if ( -s $pre_auth )
 		{
 			open AUTH_FILE, "<$pre_auth" or die "**error opening '$pre_auth', $!\n";
@@ -231,7 +263,7 @@ sub init
 		}
 		else
 		{
-			print STDERR "**error: -t selected, but file is missing or empty.\n";
+			print STDERR "**error: '$pre_auth' file is missing or empty.\n";
 			usage();
 		}
 	}
@@ -251,7 +283,7 @@ sub trim( $ )
 # Cleans the marc record of common problems.
 # param:  Array of MARC tags for a single authority record.
 # return: Array of trimmed strings.
-sub clean
+sub normalizeAuthorityID
 {
 	my @record = ();
 	my ( $authId, $tag ) = getAuthId( @_ );
@@ -262,7 +294,6 @@ sub clean
 			$line = $& . $authId;
 		}
 		# $line = trim( $line ); # Trimming the line has no effect on flat load.
-		print STDOUT $line . "\n" if ( $opt{'o'} ); # Write to stdout if requested.
 		push @record, $line;
 	}
 	return @record;
@@ -311,29 +342,68 @@ sub computeScore
 	}
 }
 
+# Process the authority record trying to match and record results.
+# param:  authority record as a list of strings.
+# return: 
 sub process
 {
-	my @marcRecord = clean( @_ );
-	computeScore( $stats, @marcRecord );
-	# Test against the 'p're loaded authorities.
-	if ( $opt{'p'} || $opt{'t'} )
+	# Keep an unadulterated copy in case we don't find a match because it's a new authority.
+	my @unalteredMarcRecord = ();
+	foreach ( @_ )
 	{
-		my ( $authId, $tag ) = getAuthId( @marcRecord );
-		if ( $authId eq "" )
+		push @unalteredMarcRecord, $_;
+	}
+	my @alteredMarcRecord = normalizeAuthorityID( @_ );
+	computeScore( $stats, @alteredMarcRecord );
+	my $isMatch = 0;
+	# Test against the 'p're loaded authorities.
+	my ( $authId, $tag ) = getAuthId( @alteredMarcRecord );
+	if ( $authId eq "" )
+	{
+		$stats->{'update w/o auth id'}++;
+	}
+	else
+	{
+		# print STDERR "check:'$authId' in \$PRE_LOAD\n";
+		if ( defined $PRE_LOAD->{ $authId } )
 		{
-			$stats->{'update w/o auth id'}++;
+			$stats->{'match'}++;
+			$isMatch = 1;
 		}
 		else
 		{
-			# print STDERR "check:'$authId' in \$PRE_LOAD\n";
-			if ( defined $PRE_LOAD->{ $authId } )
+			print STDERR "*warning: failed to match '$authId'\n" if ( $opt{'v'} && $opt{'v'} eq "all" );
+			$stats->{'no match'}++;
+		}
+	}
+	# If requested we will output the record now. If the record matched existing auth_id it means
+	# we have already loaded it. That means that Symphony has a normalized auth id, but the 001
+	# tag will have a non-normalized field. Since we want all authorities that we have never seen 
+	# before to be loaded from BackStage without modification. On next update we will have to 
+	# reference the auth ID by the normalized version. Example: Backstage will supply an authid of
+	# 'nr 4392G99045'. when we load that Symphony will normalize it and its internal auth id will be
+	# 'NR4392G99045' (by selauthority) when it gets loaded. If the authority comes back with a modification
+	# we will do another comparison and find that the normalized auth id exists, and its 001 is 'nr 4392G99045'.
+	# If we created with the normalized version the 001 field would mis-leadingly show 'NR4392G99045'.
+	# This would only be a problem if we had to back reference with BackStage, which has already happened.
+	# The goal is to separate and normalize the update records leaving the un-recognized records unmolested.
+	# This is safe except for when you don't compare with existing records. In that case the match rate drops
+	# to 9% on a good day, and the rest of the un-recognized auth IDs will be created.
+	if ( $opt{'o'} )
+	{
+		# There was no match so output the original record without modifications for creating authority with standard 001.
+		if ( $isMatch == 0 ) 
+		{
+			foreach my $line ( @unalteredMarcRecord )
 			{
-				$stats->{'match'}++;
+				print STDOUT $line; # Write to stdout if requested, they have new lines already.
 			}
-			else
+		}
+		else # There was a match so output the normalized authority ID for load matching.
+		{
+			foreach my $line ( @alteredMarcRecord )
 			{
-				print STDERR "*warning: failed to match '$authId'\n" if ( $opt{'v'} && $opt{'v'} eq "all" );
-				$stats->{'no match'}++;
+				print STDOUT $line . "\n"; # Write to stdout if requested.
 			}
 		}
 	}

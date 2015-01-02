@@ -374,5 +374,14 @@ FORM=PERSONAL
   7497 $<authority> $(1405)
 Symphony $<authority> $<load> $<finished_on> $<tuesday:u>, $<december:u> 30, 2014, 10:46 AM
 
+======================
+Things to think about for production.
 
+If you normalize a flat file and then load it, the authority will have a 001 field normalized, which BSLW 
+will not be able to match again in the futre.
+
+Process suggestion: use selauthority to output all our existing keys and authids, then use the -i to separate 
+files from BSLW into New and Updates. The updates get get loaded as updates and creates as creates. Or even 
+BETTER get the script to not normalize authorities that it doesn't recognize, then on create or update and the
+whole thing gets done in one fell swoop!!
  
