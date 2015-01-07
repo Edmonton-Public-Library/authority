@@ -4,7 +4,16 @@ Project Notes
 -------------
 
 Instructions for Running:
-./authority
+Validate an incoming or outgoing flat files -v shows all warnings (use "update" to not show failed matches on new
+records). '-o' will output all changes. Unmatched authority IDs will be output untouched, but matching authority IDs 
+are output as normalized, so they can match the normalized IDs in Symphony. In this one step you will get flat output
+that you can update on match and create on no match (see authload -x) and match success rate. Match points for Authorities
+are always considered to be 001, while match point for bib records are the TCN (in the 035 tag).
+ cat 20150107_EPL_Authority_Records.flat | ./authority.pl -v"all" -o >fixed20150107.flat
+ 
+During operation the script will create a dump of authority keys and authority IDs which it will attempt to match the
+authority records passed in on STDIN. With no switches it will report the match rate and some other interesting 
+stats. If you want a loadable file just use the -o to output to STDOUT.
 
 Product Description:
 This script validates flat authority marc files.
