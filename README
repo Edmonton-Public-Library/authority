@@ -384,4 +384,95 @@ Process suggestion: use selauthority to output all our existing keys and authids
 files from BSLW into New and Updates. The updates get get loaded as updates and creates as creates. Or even 
 BETTER get the script to not normalize authorities that it doesn't recognize, then on create or update and the
 whole thing gets done in one fell swoop!!
- 
+
+In addition:
+
+So now we want to send an update and Chris recommends that we run the flat file he created as a dump through
+the script. The flat file is a dump of our authority table so it should match 100% since we are comparing our
+authorities with our authorities, but...
+== snip ==\*warning: failed to match 'BIK-4340'
+*warning: failed to match 'AMX-3455'
+Analysis:
+           PERSONAL :    3072
+   update-auth count:    3636
+        ambiguous ID:       6
+                 016:     496
+            no match:    2105
+               match:    1529
+            MEETING :       8
+  update w/o auth id:       2
+      pre-auth count:  387428
+           GEOGRAPH :      12
+          LCCHILDSH :       1
+               LCSH :      87
+              TITLE :      13
+                 001:    7220
+          CORPORATE :     443
+percent match: 42.05
+== snip ==
+
+Why the 42% match? Turns out Chris had dumped the authorities with auth id in the 035. Fixed and run again, we got the 
+same results. Why?
+
+Turns out that when you dump an authority with 'authdump -ki001 it puts an additional 001 field into the flat file but 
+at least it is predictable, that is the real auth id is in the first field.
+
+Then I had to modify the script to not process any second or greater 001 fields. Once done we get much better results:
+*warning: ambiguous authority id, 001='XX904649', 016='0072D6091'
+*warning: ambiguous authority id, 001='XX904649', 016='0072D6091'
+*warning: ambiguous authority id, 001='N2011071231', 016='1022B1490'
+*warning: ambiguous authority id, 001='N2011071231', 016='1022B1490'
+*warning: failed to match 'N96014505T'
+*warning: ambiguous authority id, 001='N2010045708', 016='1004K4141'
+*warning: ambiguous authority id, 001='N2010045708', 016='1004K4141'
+Analysis:
+           PERSONAL :    3072
+   update-auth count:    3636
+        ambiguous ID:       6
+                 016:     496
+            no match:       1
+                 010:    2218
+               match:    3635
+            MEETING :       8
+      pre-auth count:  387431
+           GEOGRAPH :      12
+          LCCHILDSH :       1
+               LCSH :      87
+              TITLE :      13
+                 001:    7220
+          CORPORATE :     443
+percent match: 99.97
+
+NOTE:
+The 'N96014505T' is a poorly modified record that accidentally had a 't' attached. Once attached there is no way to 
+remove it that I can think of. WF does not find it to fix it, and you cannot overlay the flat file because the match
+is on the 001 field; the field you are trying to fix. I created a ticket with SD to fix and now that is done.
+
+======= related email ========
+This email sent to Stephanie Hansen on Jan 7, 2015.
+== snip ==
+Here is a sample MARC file of our adds and changes from May 1 2014 inclusive. 
+
+As we discussed, when I dump a specific authority such as ‘n  94091369‘, requesting the system place the authority ID in tag 001 I get:
+*** DOCUMENT BOUNDARY ***
+FORM=PERSONAL
+.000. |az n  c
+.001. |aN94091369
+.001. |aAMX-3455
+.005. |a20031003052447.0
+.008. |a940922n| acannaabn          |a aaa
+.010. |an  94091369
+.035. |a(OCoLC)oca03685773
+.040. |aDLC|beng|cDLC|dPPi-MA
+.100. 1 |aSuzuki, Pat
+.400. 1 |aSuzuki, Chiyoko
+.670. |aFlower drum song, 1959?:|blabel (Pat Suzuki)
+.670. |aInternet Movie Database, Oct. 2, 2003|b(Pat Suzuki; b. Chiyoko Suzuki, Sept. 23, early 1930s, Cressy, Calif.)
+.670. |aBio. and geneal. master index on GaleNet, Oct. 2, 2003|b(Suzuki, Pat, 1930?- ; Suzuki, Pat, 1931- ; Suzuki, Pat)
+.675. |aContemp. theatre, film, and television, v. 1-49;|aVariety's ww in show business, 1989
+
+I want to confirm that BSLW will select the first 001 as a match point, and secondly that BSLW can run the 
+script you mentioned in our phone conversation to match authorities stored in your database when comparing 
+001 match; in this case matching on your stored value  ‘n  94091369‘.
+== snip ==
+

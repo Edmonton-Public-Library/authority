@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.9.01 - Ensure only the fist 001 field is used when processing.
 #          0.9 - Removed -c flag since we always want to check against normalized
 #                authority IDs, except when the input file is a flat file ('-f'). 
 #          0.8 - Output unmatched authority IDs untouched for create process. 
@@ -53,7 +54,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.9};
+my $VERSION    = qq{0.9.01};
 
 my $stats = {};
 
@@ -155,15 +156,35 @@ sub getAuthId
 	my $tag    = "";
 	my $t001   = "";
 	my $t016   = "";
+	my $first001 = 0; # in Symphony 'echo 906193 | authdump -ki001' will produce:
+	# *** DOCUMENT BOUNDARY ***
+	# FORM=PERSONAL
+	# .000. |az n  c
+	# .001. |aN94091369
+	# .001. |aAMX-3455
+	# .005. |a20031003052447.0
+	# .008. |a940922n| acannaabn          |a aaa
+	# .010. |an  94091369
+	# .035. |a(OCoLC)oca03685773
+	# .040. |aDLC|beng|cDLC|dPPi-MA
+	# .100. 1 |aSuzuki, Pat
+	# .400. 1 |aSuzuki, Chiyoko
+	# .670. |aFlower drum song, 1959?:|blabel (Pat Suzuki)
+	# .670. |aInternet Movie Database, Oct. 2, 2003|b(Pat Suzuki; b. Chiyoko Suzuki, Sept. 23, early 1930s, Cressy, Calif.)
+	# .670. |aBio. and geneal. master index on GaleNet, Oct. 2, 2003|b(Suzuki, Pat, 1930?- ; Suzuki, Pat, 1931- ; Suzuki, Pat)
+	# .675. |aContemp. theatre, film, and television, v. 1-49;|aVariety's ww in show business, 1989
+	# but notice the 2 001 fields - even though 001 is non-repeating! $first001 signals that we ignore the second loading
+	# on the first always just like BSLW requests and does themselves. Phone conversation Jan 7, 2015.
 	foreach ( @_ )
 	{
 		# If we assume the authority id is in one of the following: 001, 016.
 		chomp;
-		if ( m/\.001\./ )
+		if ( m/\.001\./ && $first001 == 0)
 		{
 			$t001 = getAuthIDField( $_ );
 			$authId = $t001;
 			$tag = "001" if ( $t001 ne "" );
+			$first001++;
 		}
 		elsif ( m/\.016\./ )
 		{
@@ -338,6 +359,10 @@ sub computeScore
 		if ( $line =~ m/\.016\./ )
 		{
 			$stats->{'016'} += countRepeatableFields( $line );
+		}
+		if ( $line =~ m/\.010\./ )
+		{
+			$stats->{'010'}++;
 		}
 	}
 }
