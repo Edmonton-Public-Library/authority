@@ -26,6 +26,8 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.9.03 - Compute the age of the authority key and authority ID file and don't recreate if < 24 hours.
+#          0.9.02 - Removed 'c' from opt line checking. There is nothing that uses it.
 #          0.9.01 - Ensure only the fist 001 field is used when processing.
 #          0.9 - Removed -c flag since we always want to check against normalized
 #                authority IDs, except when the input file is a flat file ('-f'). 
@@ -54,7 +56,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.9.01};
+my $VERSION    = qq{0.9.03};
 
 my $stats = {};
 
@@ -90,8 +92,7 @@ The goal is to separate and normalize the update records leaving the un-recogniz
 This is safe except for when you don't compare with existing records. In that case the match rate drops
 to 9% on a good day, and the rest of the un-recognized authority IDs will be created.
 
-If you ran the script with -o but not -c, the input file and output file would be the same.
-If -c is selected, only authority IDs that are recognized on the system are normalized on
+Only authority IDs that are recognized on the system are normalized on
 output; unrecognized records are output unaltered.
 
  -o      : Write output to standard out. Only works on data from standard in.
@@ -107,11 +108,11 @@ examples :
  cat update.flat | $0 -p"current.flat"
  cat update.flat | $0 -o \> fixed_authorities.flat
 To create a flat file with best match for loading authority UPDATES (normalized 001) use:
- cat new_changed_authorities.flat | $0 -o \> fixed_authorities.flat
+ cat new_changed_authorities.flat | $0 -v"all" -o \> fixed_authorities.flat
 To create a flat file with best match for loading NEW authorities use:
- cat new_changed_authorities.flat | $0 -o \> fixed_authorities.flat
-Same thing. You want to test New records for match first; should come back with 0 matches
-but if there are matches they will overlay, not create.
+ cat new_changed_authorities.flat | $0 -v"update" -o \> fixed_authorities.flat
+Same thing but will suppress warnings about mismatched IDs, all other messages are 
+printed to stdout.
 
 Version: $VERSION
 EOF
@@ -204,7 +205,7 @@ sub getAuthId
 # return: 
 sub init
 {
-    my $opt_string = 'cof:v:x';
+    my $opt_string = 'of:v:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	if ( $opt{'f'} )
@@ -263,8 +264,16 @@ sub init
 		# Initialize the counter for matches. If anything fails we still get valid '0'.
 		$stats->{'match'} = 0;
 		my $pre_auth = "AllAuthKeysAndIDs.lst";
-		print STDERR "creating list of current authority keys and IDs. This could take some time. ";
-		`selauthority -oKF 2>/dev/null > $pre_auth`;
+		print STDERR "creating list of current authority keys and IDs. This could take some time. \n";
+		if ( -s $pre_auth )
+		{
+			my $pre_auth_age = -M $pre_auth;
+			print STDERR sprintf( "*Warning: using existing file '%s', aged  %0.1f days.\n", $pre_auth, $pre_auth_age );
+		}
+		else
+		{
+			`selauthority -oKF 2>/dev/null > $pre_auth`;
+		}
 		print STDERR "done.\n";
 		if ( -s $pre_auth )
 		{
