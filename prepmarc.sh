@@ -41,12 +41,12 @@ fi
 # newer files.
 if [ -e $TOUCH_FILE ]
 then
-	LAST_RUN=`stat -c %Y $TOUCH_FILE`
-	LAST_RUN_DATE=`stat -c %y $TOUCH_FILE`
+	# LAST_RUN=`stat -c %Y $TOUCH_FILE`
+	perl -e 'print ((stat("._marc_.txt"))[9]);' > tmp.$$
+	LAST_RUN=`cat tmp.$$`
+	# LAST_RUN_DATE=`stat -c %y $TOUCH_FILE`
 else
 	echo "no $TOUCH_FILE found, will process all MARC files in directory."
-	# Touch the file so the next time it runs we can compare which files were added after we run now.
-	touch $TOUCH_FILE
 fi
 
 # Here we will get a list of all the new MARC files and process them.
@@ -61,17 +61,23 @@ then
 	## now loop through the above array
 	for file in "${marcFiles[@]}"
 	do
-		myFileTime=`stat -c %Y $file`
-		if [ "$LAST_RUN" -lt "$myFileTime" ]
+		perl -e 'print ((stat("'$file'"))[9]);' > tmp.$$
+		myFileTime=`cat tmp.$$`
+		# echo "comparing $LAST_RUN -lt $myFileTime"
+		if (( "$LAST_RUN" < "$myFileTime" ))
 		then
 			echo "Found a fresh MARC file: '$file'. Processing..."
 			marcFileCount=$[$marcFileCount +1]
 			cat $file | flatskip -im -aMARC -of 2>>log.txt >$file.flat
-			echo "done."
+			cat $file.flat | ./authority.pl -v"all" -o >$file.fix.flat 2>>log.txt
+			echo "$marcFileCount files done."
 		fi
 	done
-	if [ $marcFileCount -gt 0 ]
+	if [[ $marcFileCount -gt 0 ]]
 	then
-		echo "$marcFileCount new fresh MARC files found. Last check: $LAST_RUN_DATE." 
+		echo "$marcFileCount new fresh MARC files found since last check." 
 	fi
 fi # No failed customers found.
+rm tmp.$$
+# Touch the file so the next time it runs we can compare which files were added after we run now.
+touch $TOUCH_FILE
