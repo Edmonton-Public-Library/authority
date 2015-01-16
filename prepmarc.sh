@@ -79,4 +79,4 @@ fi # No failed customers found.
 rm tmp.$$
 # Touch the file so the next time it runs we can compare which files were added after we run now.
 touch $TOUCH_FILE
-echo "$marcFileCount files done."
+echo "$marcFileCount fresh files done. If you where expecting something try touching the MRC file you want to process."
