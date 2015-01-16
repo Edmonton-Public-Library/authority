@@ -32,17 +32,18 @@ REMOTE=~/Unicorn/EPLwork/anisbet/Authorities/
 LOCAL=~/projects/authority/
 APP=authority.pl
 BIB_APP=bibmatchpoint.sh
+PREP_APP=prepmarc.sh
 ARGS=-x
 
 put: test ${BIB_APP}
 	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
 	scp ${LOCAL}${BIB_APP} ${USER}@${TEST_SERVER}:${REMOTE}
+	scp ${LOCAL}${PREP_APP} ${USER}@${TEST_SERVER}:${REMOTE}
 	ssh ${USER}@${TEST_SERVER} '${REMOTE}${APP} ${ARGS}'
-get:
-	scp ${USER}@${TEST_SERVER}:${REMOTE}${APP} ${LOCAL}
 test:
 	perl -c ${APP}
 production: test ${BIB_APP}
 	scp ${LOCAL}${APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
 	scp ${LOCAL}${BIB_APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
+	scp ${LOCAL}${PREP_APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
 
