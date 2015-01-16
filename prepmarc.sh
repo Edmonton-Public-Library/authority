@@ -53,11 +53,10 @@ fi
 # If you want to re-process any MARC file like foo.MRC, just type the following:
 # touch foo.MRC
 # ./prepmarc.sh
+marcFileCount=0
 if ls *.MRC >/dev/null
 then
 	declare -a marcFiles=(`ls *.MRC`)
-	marcFileCount=0
-
 	## now loop through the above array
 	for file in "${marcFiles[@]}"
 	do
@@ -70,7 +69,6 @@ then
 			marcFileCount=$[$marcFileCount +1]
 			cat $file | flatskip -im -aMARC -of 2>>log.txt >$file.flat
 			cat $file.flat | ./authority.pl -v"all" -o >$file.fix.flat 2>>log.txt
-			echo "$marcFileCount files done."
 		fi
 	done
 	if [[ $marcFileCount -gt 0 ]]
@@ -81,3 +79,4 @@ fi # No failed customers found.
 rm tmp.$$
 # Touch the file so the next time it runs we can compare which files were added after we run now.
 touch $TOUCH_FILE
+echo "$marcFileCount files done."
