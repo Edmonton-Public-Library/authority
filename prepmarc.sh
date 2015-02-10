@@ -17,12 +17,17 @@
 # MA 02110-1301, USA.
 #
 # Processes all the MARC files in the directory into flat files for testing and loading.
+# Version:
+# 1.1 - Added code append to a single fix.flat file, and remove before the process starts.
+#       Fixed comments. Added code to remove old fix.flat if there are more than on new
+#       MARC files.
+# 1.0 - initial release.
 #
 ############################################################################################
 export HOME=/s/sirsi/Unicorn/EPLwork/anisbet/Authorities
 export LANG=en_US.UTF-8
 export SHELL=/bin/bash
-
+export NAME="[prepmarc.sh]"
 TOUCH_FILE=./._marc_.txt
 LAST_RUN=0
 LAST_RUN_DATE=""
@@ -32,7 +37,7 @@ if [ -e $HOME ]
 then
 	cd $HOME
 else
-	echo "**error: invalid configuration. '$HOME' doesn't exist."
+	echo "$NAME **error: invalid configuration. '$HOME' doesn't exist."
 	exit 1
 fi
 
@@ -46,7 +51,7 @@ then
 	LAST_RUN=`cat tmp.$$`
 	# LAST_RUN_DATE=`stat -c %y $TOUCH_FILE`
 else
-	echo "no $TOUCH_FILE found, will process all MARC files in directory."
+	echo "$NAME no $TOUCH_FILE found, will process all MARC files in directory."
 fi
 
 # Here we will get a list of all the new MARC files and process them.
@@ -54,29 +59,33 @@ fi
 # touch foo.MRC
 # ./prepmarc.sh
 marcFileCount=0
-if ls *.MRC >/dev/null
-then
-	declare -a marcFiles=(`ls *.MRC`)
-	## now loop through the above array
-	for file in "${marcFiles[@]}"
-	do
-		perl -e 'print ((stat("'$file'"))[9]);' > tmp.$$
-		myFileTime=`cat tmp.$$`
-		# echo "comparing $LAST_RUN -lt $myFileTime"
-		if (( "$LAST_RUN" < "$myFileTime" ))
-		then
-			echo "Found a fresh MARC file: '$file'. Processing..."
-			marcFileCount=$[$marcFileCount +1]
-			cat $file | flatskip -im -aMARC -of 2>>log.txt >$file.flat
-			cat $file.flat | ./authority.pl -v"all" -o >$file.fix.flat 2>>log.txt
-		fi
-	done
-	if [[ $marcFileCount -gt 0 ]]
+
+declare -a marcFiles=(`ls *.MRC`)
+
+echo "$NAME cleaning out old files"
+# ...clean out the fix.flat file, it's a temp file any way.
+if [ -s fix.flat ]; then
+	rm fix.flat
+fi
+if [ -s log.txt ]; then
+	rm log.txt
+fi
+
+## now loop through the above array
+for file in "${marcFiles[@]}"
+do
+	perl -e 'print ((stat("'$file'"))[9]);' > tmp.$$
+	myFileTime=`cat tmp.$$`
+	# echo "comparing $LAST_RUN -lt $myFileTime"
+	if (( "$LAST_RUN" < "$myFileTime" ))
 	then
-		echo "$marcFileCount new fresh MARC files found since last check." 
+		marcFileCount=$[$marcFileCount +1]
+		echo "$NAME Found a fresh MARC file: '$file'. Processing: # $marcFileCount..."
+		cat $file | flatskip -im -aMARC -of 2>>log.txt >$file.flat
+		cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
 	fi
-fi # No failed customers found.
+done
 rm tmp.$$
 # Touch the file so the next time it runs we can compare which files were added after we run now.
 touch $TOUCH_FILE
-echo "$marcFileCount fresh files done. If you where expecting something try touching the MRC file you want to process."
+echo "$NAME $marcFileCount fresh files done."
