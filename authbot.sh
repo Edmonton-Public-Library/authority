@@ -65,6 +65,8 @@ else
 	cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > AllAuth.keys
 	if [ -s AllAuth.keys ]
 	then
+		cat AllAuth.keys | sort -r | uniq > tmp.$$
+		mv tmp.$$ > AllAuth.keys
 		numKeys=$(cat AllAuth.keys | wc -l)
 		if (( $numKeys <= $MAX_KEYS ))
 		then
