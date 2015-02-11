@@ -26,6 +26,10 @@
 #        on the condition that the maximum number of keys are processed 
 #        by authload is not exceeded.
 # Example: ./authbot.sh 10000
+#    NOTE: Chris informs me that we do not need to stop files from copying after a certain 
+#          size since the number of records to process is controlled through the adutext report.
+#          This functionality remains within this code. To work around it pass a param greater
+#          than the maximum expected authorities.
 #
 ############################################################################################
 export HOME=/s/sirsi/Unicorn/EPLwork/anisbet/Authorities
