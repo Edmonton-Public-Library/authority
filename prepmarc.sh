@@ -18,6 +18,7 @@
 #
 # Processes all the MARC files in the directory into flat files for testing and loading.
 # Version:
+# 1.2 - Added pipe from flatskip to Bincustom/nowrap.pl.
 # 1.1 - Added code append to a single fix.flat file, and remove before the process starts.
 #       Fixed comments. Added code to remove old fix.flat if there are more than on new
 #       MARC files.
@@ -28,6 +29,7 @@ export HOME=/s/sirsi/Unicorn/EPLwork/anisbet/Authorities
 export LANG=en_US.UTF-8
 export SHELL=/bin/bash
 export NAME="[prepmarc.sh]"
+export BIN_CUSTOM=`getpathname bincustom`
 TOUCH_FILE=./._marc_.txt
 LAST_RUN=0
 LAST_RUN_DATE=""
@@ -81,7 +83,7 @@ do
 	then
 		marcFileCount=$[$marcFileCount +1]
 		echo "$NAME Found a fresh MARC file: '$file'. Processing: # $marcFileCount..."
-		cat $file | flatskip -im -aMARC -of 2>>log.txt >$file.flat
+		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
 		cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
 	fi
 done
