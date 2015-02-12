@@ -70,7 +70,7 @@ else
 	if [ -s AllAuth.keys ]
 	then
 		cat AllAuth.keys | sort -r | uniq > tmp.$$
-		mv tmp.$$ > AllAuth.keys
+		mv tmp.$$ AllAuth.keys
 		numKeys=$(cat AllAuth.keys | wc -l)
 		if (( $numKeys <= $MAX_KEYS ))
 		then
