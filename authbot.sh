@@ -33,14 +33,13 @@
 #
 ############################################################################################
 export HOME=/s/sirsi/Unicorn/EPLwork/anisbet/Authorities
-export BATCH_KEY_DIR=
+export WORK_DIR=`getpathname workdir`
+export BATCH_KEY_DIR=${WORK_DIR}/Batchkeys
 export LANG=en_US.UTF-8
 export SHELL=/bin/bash
 export TODAY=`date +'%Y%m%d'`
-export workdir=`getpathname workdir`
 export NAME="[authbot.sh]"
-batchakeyfile=${workdir}/Batchkeys/authedit.keys
-MAX_KEYS=100000
+MAX_KEYS=600000
 
 cd $HOME
 if [ ! -s prepmarc.sh ]
@@ -66,21 +65,26 @@ else
 	# the length of which, controls the number of authority records that will be
 	# processed by adutext. The current opinion amongst experts is to limit the
 	# number to 100,000. After that adutext is liable to run into the HUP.
-	cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > AllAuth.keys
-	if [ -s AllAuth.keys ]
+	cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
+	if [ -s authedit.keys ]
 	then
-		cat AllAuth.keys | sort -r | uniq > tmp.$$
-		mv tmp.$$ AllAuth.keys
-		numKeys=$(cat AllAuth.keys | wc -l)
+		# cat authedit.keys | sort -r | uniq > tmp.$$
+		echo "Randomizing the keys for smoother adutext loading."
+		randomselection.pl -r -fauthedit.keys >tmp.$$
+		cp tmp.$$ authedit.keys
+		numKeys=$(cat authedit.keys | wc -l)
 		if (( $numKeys <= $MAX_KEYS ))
 		then
-			echo "$NAME copying AllAuth.keys to $batchakeyfile "
-			cp AllAuth.keys $batchakeyfile
+			echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys "
+			cp authedit.keys ${BATCH_KEY_DIR}/authedit.keys
 		else
-			echo "$NAME ** Warning: $numKeys keys found in AllAuth.keys but $MAX_KEYS requested."
-			echo "$NAME ** Warning: split AllAuth.keys and copy the a section to '$batchakeyfile'."
+			echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested."
+			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'."
 			exit 1
 		fi
+	else
+		echo "$NAME ** Warning: authedit.keys not created or empty, nothing to do."
+		exit 0
 	fi
 fi
 echo "$NAME successful."

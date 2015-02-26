@@ -485,3 +485,32 @@ script you mentioned in our phone conversation to match authorities stored in yo
 001 match; in this case matching on your stored value  ‘n  94091369‘.
 == snip ==
 
+== More on Authority Updates ==
+Once we got the correct records back from BSLW, we loaded them and throttled adutext to index only 20,000 records.
+
+
+Note that subject header changes end up touching 100,000 bib records which means that adutext run-time blew up by an
+additional 6 hours. Also because the bibs were touched, the OCLC update was unusually large.
+
+
+Reports on adutext performance:
+On test machine we are going to set up some experiments. I am first loading all TITLE.NEW.MRC, and SERIES.NEW.MRC
+that BSLW gave us with the exact same process except that I am not sorting the keys in the authedit.keys file.
+Symphony $<authority> $<load> $<finished_on> $<tuesday:u>, $<february:u> 24, 2015, 4:21 PM
+[authbot.sh] copying AllAuth.keys to /s/sirsi/Unicorn/Work/Batchkeys/authedit.keys
+[authbot.sh] successful.
+bash-3.2$ cat  /s/sirsi/Unicorn/Work/Batchkeys/authedit.keys | wc -l
+   20096
+
+Now we will run the authbot on the next set; NAME.NEW.MRC and SUBJ.NEW.MRC in that order. We will not sort the keys.
+This will bring the test machine upto par with the production as far as authorities are concerned, AND we can start
+to monitor adutext runs on test to see how a random selection of keys affects runtime over several days.
+
+Symphony $<authority> $<load> $<finished_on> $<wednesday:u>, $<february:u> 25, 2015, 8:06 PM
+[authbot.sh] ** Warning:   531020 keys found in AllAuth.keys but 100000 requested.
+[authbot.sh] ** Warning: split AllAuth.keys and copy the a section to '/s/sirsi/Unicorn/Work/Batchkeys/authedit.keys'.
+bash-3.2$ ls /s/sirsi/Unicorn/Work/Batchkeys/authedit.keys
+/s/sirsi/Unicorn/Work/Batchkeys/authedit.keys: No such file or directory
+bash-3.2$ ls
+AllAuth.keys               authbot.sh                 bibmatchpoint.sh           fix.flat.err               log.txt                    NAME.NEW.MRC               prepmarc.sh                SUBJ.NEW.MRC
+AllAuthKeysAndIDs.lst      authority.pl               fix.flat                   fix.flat.err.TITLE.SERIES  Makefile                   NAME.NEW.MRC.flat          SERIES.NEW.MRC             SUBJ.NEW.MRC.flat
