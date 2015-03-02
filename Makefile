@@ -28,7 +28,7 @@
 PRODUCTION_SERVER=eplapp.library.ualberta.ca
 TEST_SERVER=edpl-t.library.ualberta.ca
 USER=sirsi
-REMOTE=~/Unicorn/EPLwork/anisbet/Authorities/
+REMOTE=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage/
 LOCAL=~/projects/authority/
 APP=authority.pl
 BIB_APP=bibmatchpoint.sh
