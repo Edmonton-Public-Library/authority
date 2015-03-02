@@ -19,7 +19,7 @@
 # Collects all the notices required for the day and coordinates convertion to PDF.
 #
 ############################################################################################
-export HOME=/s/sirsi/Unicorn/EPLwork/anisbet/Authorities
+export HOME=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
 export LANG=en_US.UTF-8
 export SHELL=/bin/bash
 

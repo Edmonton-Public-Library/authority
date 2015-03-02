@@ -32,7 +32,7 @@
 #          than the maximum expected authorities.
 #
 ############################################################################################
-export HOME=/s/sirsi/Unicorn/EPLwork/anisbet/Authorities
+export HOME=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
 export WORK_DIR=`getpathname workdir`
 export BATCH_KEY_DIR=${WORK_DIR}/Batchkeys
 export LANG=en_US.UTF-8
