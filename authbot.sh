@@ -43,6 +43,13 @@ MAX_KEYS=1000000
 DELETE_KEYS_FILE=DEL.MRC.keys
 
 cd $HOME
+
+if [ $1 ]
+then
+	MAX_KEYS=$1
+fi
+echo "$NAME MAX_KEYS set to $MAX_KEYS."
+echo "$NAME TODAY set to $TODAY."
 if [ ! -s ./prepmarc.sh ]
 then
 	echo "$NAME ** script needs $HOME/premarc.sh to run!"
@@ -60,12 +67,7 @@ else
 		rm $DELETE_KEYS_FILE
 	fi
 fi
-if [ $1 ]
-then
-	MAX_KEYS=$1
-fi
-echo "$NAME MAX_KEYS set to $MAX_KEYS."
-echo "$NAME TODAY set to $TODAY."
+
 # We should now have a fix.flat file here.
 if [ -s fix.flat ]
 then
