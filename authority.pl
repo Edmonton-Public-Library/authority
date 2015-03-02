@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.9.11 - Added a trailing pipe to the authority keys output by -d.
 #          0.9.1 - Add -d flag for outputting authority keys for authorities recommended
 #                  for deletion, that is, given a list of authority IDs from vendor, output
 #                  the authority keys based on a normalized look up of those IDs.
@@ -59,7 +60,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.9.1};
+my $VERSION    = qq{0.9.11};
 
 my $stats = {};
 
@@ -419,7 +420,7 @@ sub process
 			$isMatch = 1;
 			if ($opt{'d'})
 			{
-				print STDOUT $PRE_LOAD->{ $authId } . "\n";
+				print STDOUT $PRE_LOAD->{ $authId } . "|\n";
 			}
 		}
 		else

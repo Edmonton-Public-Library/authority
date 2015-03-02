@@ -39,15 +39,26 @@ export LANG=en_US.UTF-8
 export SHELL=/bin/bash
 export TODAY=`date +'%Y%m%d'`
 export NAME="[authbot.sh]"
-MAX_KEYS=600000
+MAX_KEYS=1000000
+DELETE_KEYS_FILE=DEL.MRC.keys
 
 cd $HOME
-if [ ! -s prepmarc.sh ]
+if [ ! -s ./prepmarc.sh ]
 then
 	echo "$NAME ** script needs $HOME/premarc.sh to run!"
 	exit 1
 else
-	prepmarc.sh
+	./prepmarc.sh
+	# prepmarc.sh knows how to process delete marc files.
+	# The bi-product of that process is called: 'DEL.MRC.keys'
+	if [ -s $DELETE_KEYS_FILE ]
+	then
+		echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..."
+		cat $DELETE_KEYS_FILE | remauthority -u
+		echo "$NAME authorities deleted."
+		# Now remove the file so we don't do this again if re-run.
+		rm $DELETE_KEYS_FILE
+	fi
 fi
 if [ $1 ]
 then
@@ -56,11 +67,8 @@ fi
 echo "$NAME MAX_KEYS set to $MAX_KEYS."
 echo "$NAME TODAY set to $TODAY."
 # We should now have a fix.flat file here.
-if [ ! -s fix.flat ]
+if [ -s fix.flat ]
 then
-	echo "$NAME Nothing to do. Looks like $HOME/premarc.sh didn't produce any output."
-	exit 0
-else
 	# Authload doesn't do any touchkeys, it is designed to take a file of cat keys 
 	# the length of which, controls the number of authority records that will be
 	# processed by adutext. The current opinion amongst experts is to limit the
@@ -82,9 +90,6 @@ else
 			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'."
 			exit 1
 		fi
-	else
-		echo "$NAME ** Warning: authedit.keys not created or empty, nothing to do."
-		exit 0
 	fi
 fi
 echo "$NAME successful."

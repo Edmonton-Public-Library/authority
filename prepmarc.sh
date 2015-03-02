@@ -84,7 +84,12 @@ do
 		marcFileCount=$[$marcFileCount +1]
 		echo "$NAME Found a fresh MARC file: '$file'. Processing: # $marcFileCount..."
 		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
-		cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
+		if [ $file = 'DEL.MRC' ]
+		then
+			cat $file.flat | ./authority.pl -d > $file.keys 2>>log.txt
+		else
+			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
+		fi
 	fi
 done
 rm tmp.$$
