@@ -26,6 +26,9 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.9.1 - Add -d flag for outputting authority keys for authorities recommended
+#                  for deletion, that is, given a list of authority IDs from vendor, output
+#                  the authority keys based on a normalized look up of those IDs.
 #          0.9.03 - Compute the age of the authority key and authority ID file and don't recreate if < 24 hours.
 #          0.9.02 - Removed 'c' from opt line checking. There is nothing that uses it.
 #          0.9.01 - Ensure only the fist 001 field is used when processing.
@@ -56,7 +59,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.9.03};
+my $VERSION    = qq{0.9.1};
 
 my $stats = {};
 
@@ -92,9 +95,17 @@ The goal is to separate and normalize the update records leaving the un-recogniz
 This is safe except for when you don't compare with existing records. In that case the match rate drops
 to 9% on a good day, and the rest of the un-recognized authority IDs will be created.
 
+The '-d' flag takes the authority IDs on STDIN and then normalizes
+the .001. field and perform a look up for the authority ID in the complete list of 
+currently existing authorities, then output the corresponding authority key on STDOUT, 
+or an warning message, it not found on STDERR. This feature is intended to be
+used to identify the authority keys associated with deleted authorities.
+
 Only authority IDs that are recognized on the system are normalized on
 output; unrecognized records are output unaltered.
 
+ -d      : Given a set of authority IDs on STDIN, find and output the corresponding
+           authority keys to STDOUT. Intended to process deleted MARC records.
  -o      : Write output to standard out. Only works on data from standard in.
  -f<file>: Pre-load an authority flat file to test how closely the input matches,
            otherwise pre-load comparison is taken from 'selauthority -oKF \> AllAuthKeysAndIDs.lst'.
@@ -113,6 +124,8 @@ To create a flat file with best match for loading NEW authorities use:
  cat new_changed_authorities.flat | $0 -v"update" -o \> fixed_authorities.flat
 Same thing but will suppress warnings about mismatched IDs, all other messages are 
 printed to stdout.
+To output the authority keys of records for deletion:
+ cat delete.flat | $0 -d
 
 Version: $VERSION
 EOF
@@ -205,7 +218,7 @@ sub getAuthId
 # return: 
 sub init
 {
-    my $opt_string = 'of:v:x';
+    my $opt_string = 'dof:v:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	if ( $opt{'f'} )
@@ -281,11 +294,12 @@ sub init
 			while (<AUTH_FILE>)
 			{
 				my @record = split( '\|', $_ );
-				# The key will be in the second field.
+				# The ID will be in the second field.
 				if ( defined $record[1] )
 				{
 					$stats->{'pre-auth count'}++;
 					my $authId = trim( $record[1] );
+					# Save the authority key as the value.
 					$PRE_LOAD->{ $authId } = $record[0];
 				}
 			}
@@ -403,10 +417,14 @@ sub process
 		{
 			$stats->{'match'}++;
 			$isMatch = 1;
+			if ($opt{'d'})
+			{
+				print STDOUT $PRE_LOAD->{ $authId } . "\n";
+			}
 		}
 		else
 		{
-			print STDERR "*warning: failed to match '$authId'\n" if ( $opt{'v'} && $opt{'v'} eq "all" );
+			print STDERR "*warning: failed to match '$authId'\n" if (( $opt{'v'} && $opt{'v'} eq "all" ) or $opt{'d'});
 			$stats->{'no match'}++;
 		}
 	}
