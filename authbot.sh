@@ -71,22 +71,28 @@ fi
 # We should now have a fix.flat file here.
 if [ -s fix.flat ]
 then
-	# Authload doesn't do any touchkeys, it is designed to take a file of cat keys 
-	# the length of which, controls the number of authority records that will be
-	# processed by adutext. The current opinion amongst experts is to limit the
-	# number to 100,000. After that adutext is liable to run into the HUP.
+	# Authload doesn't do any touchkeys so we have to put all of the effected keys into 
+	# the ${WORK_DIR}/Batchkeys/authedit.keys file for adutext to find and process over the nights to come.
 	cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
 	if [ -s authedit.keys ]
 	then
-		# cat authedit.keys | sort -r | uniq > tmp.$$
+		# We have found that if you randomize your keys you can distribute SUBJ changes over a number of nights
+		# you can improve your adutext run times by spreading them over a couple of nights rather than doing them
+		# all at once.
 		echo "Randomizing the keys for smoother adutext loading."
 		randomselection.pl -r -fauthedit.keys >tmp.$$
-		cp tmp.$$ authedit.keys
-		numKeys=$(cat authedit.keys | wc -l)
+		if [ ! -s tmp.$$ ]
+		then
+			echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?"
+			exit 1
+		fi
+		numKeys=$(cat tmp.$$ | wc -l)
 		if (( $numKeys <= $MAX_KEYS ))
 		then
 			echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys "
-			cp authedit.keys ${BATCH_KEY_DIR}/authedit.keys
+			# There may already be an authedit.keys file in the Batchkeys directory, if there is add to it,
+			# if not one will be created.
+			cat tmp.$$ >>${BATCH_KEY_DIR}/authedit.keys
 		else
 			echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested."
 			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'."
@@ -94,5 +100,5 @@ then
 		fi
 	fi
 fi
-echo "$NAME successful."
+echo "$NAME done."
 #EOF

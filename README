@@ -514,3 +514,16 @@ bash-3.2$ ls /s/sirsi/Unicorn/Work/Batchkeys/authedit.keys
 bash-3.2$ ls
 AllAuth.keys               authbot.sh                 bibmatchpoint.sh           fix.flat.err               log.txt                    NAME.NEW.MRC               prepmarc.sh                SUBJ.NEW.MRC
 AllAuthKeysAndIDs.lst      authority.pl               fix.flat                   fix.flat.err.TITLE.SERIES  Makefile                   NAME.NEW.MRC.flat          SERIES.NEW.MRC             SUBJ.NEW.MRC.flat
+
+Testing on production shows a big hump of time used by adutext by night over the nights that subj ran. Tests on test 
+machine show no such hump when all the keys are randomized.
+
+More to follow.
+
+authority.pl - fixes flat files by normalizing them and reports on key metrics for this type of file.
+prepmarc.sh  - prepares MARC files in to flat files and conditionally handles DEL.MRC files. Both this script and authority.pl
+       are safe to run by hand any time, as they do not modify the ILS in any way.
+authbot.sh   - is a driver script that runs prepmarc.sh and authority.pl in a coordinated fashion. It if prepmarc.sh produces
+       a DEL.MRC.keys file it will use remauthority to remove the authorities. If a fix.flat file exists, it will load the 
+       flat file with authload with switches to update if possible and create anything it can't find.
+	   
