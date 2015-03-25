@@ -54,10 +54,10 @@ then
 	MAX_KEYS=$1
 fi
 INIT_MSG=`date`' start ==='
-echo $INIT_MSG > log.txt
-echo "===" >> log.txt
-echo "$NAME MAX_KEYS set to $MAX_KEYS." >>log.txt
-echo "$NAME TODAY set to $TODAY." >>log.txt
+echo $INIT_MSG > authbot.txt
+echo "===" >> authbot.txt
+echo "$NAME MAX_KEYS set to $MAX_KEYS." >>authbot.txt
+echo "$NAME TODAY set to $TODAY." >>authbot.txt
 
 # First part: update your bibs. This is done because BSLW adds RDA tags 
 # into the bibs for us as part of their contract requirements.
@@ -67,9 +67,9 @@ then
 	if [ -s bibmatchpoint.sh ]
 	then
 		# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
-		bibmatchpoint.sh $BIB_MARC_FILE 2>&1 >>log.txt
+		bibmatchpoint.sh $BIB_MARC_FILE 2>&1 >>authbot.txt
 	else
-		echo "$NAME ** Warning: bibmatchpoint.sh not present in this directory." >>log.txt
+		echo "$NAME ** Warning: bibmatchpoint.sh not present in this directory." >>authbot.txt
 	fi
 	# -im (default) MARC records will be read from standard input.
 	# -a (required) specifies the format of the record.
@@ -92,7 +92,7 @@ then
 		# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
 		cat BIB.MRC.catkeys.lst >>${BATCH_KEY_DIR}/adutext.keys
 	else
-		echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>log.txt
+		echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>authbot.txt
 	fi
 	# next make sure premarc.sh doesn't process this puppy because that will add time to processing.
 	rm $BIB_MARC_FILE
@@ -101,7 +101,7 @@ fi
 # Pre-process all the other MARC files.
 if [ ! -s ./prepmarc.sh ]
 then
-	echo "$NAME ** script needs $HOME/premarc.sh to run!" >>log.txt
+	echo "$NAME ** script needs $HOME/premarc.sh to run!" >>authbot.txt
 	exit 1
 else
 	./prepmarc.sh
@@ -109,9 +109,9 @@ else
 	# The bi-product of that process is called: 'DEL.MRC.keys'
 	if [ -s $DELETE_KEYS_FILE ]
 	then
-		echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>log.txt
+		echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>authbot.txt
 		cat $DELETE_KEYS_FILE | remauthority -u
-		echo "$NAME authorities deleted." >>log.txt
+		echo "$NAME authorities deleted." >>authbot.txt
 		# Now remove the file so we don't do this again if re-run.
 		rm $DELETE_KEYS_FILE
 	fi
@@ -132,22 +132,22 @@ then
 		randomselection.pl -r -fauthedit.keys >tmp.$$
 		if [ ! -s tmp.$$ ]
 		then
-			echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?" >>log.txt
+			echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?" >>authbot.txt
 			exit 1
 		fi
 		numKeys=$(cat tmp.$$ | wc -l)
 		if (( $numKeys <= $MAX_KEYS ))
 		then
-			echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys " >>log.txt
+			echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys " >>authbot.txt
 			# There may already be an authedit.keys file in the Batchkeys directory, if there is add to it,
 			# if not one will be created.
 			cat tmp.$$ >>${BATCH_KEY_DIR}/authedit.keys
 		else
-			echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested." >>log.txt
-			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'." >>log.txt
+			echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested." >>authbot.txt
+			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'." >>authbot.txt
 			exit 1
 		fi
 	fi
 fi
-echo "$NAME end ===." >>log.txt
+echo "$NAME end ===." >>authbot.txt
 #EOF
