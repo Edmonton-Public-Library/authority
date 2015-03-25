@@ -3,7 +3,7 @@
 # Created: Mon Dec 22 10:07:38 MST 2014
 #
 #<one line to give the program's name and a brief idea of what it does.>
-#    Copyright (C) 2013  Andrew Nisbet
+#    Copyright (C) 2015  Andrew Nisbet
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #
 # Written by Andrew Nisbet at Edmonton Public Library
 # Rev: 
+#      0.1 - Change copyright date. 
 #      0.0 - Dev. 
 ####################################################
 # Change comment below for appropriate server.

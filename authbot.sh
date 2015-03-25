@@ -31,6 +31,9 @@
 #          This functionality remains within this code. To work around it pass a param greater
 #          than the maximum expected authorities.
 #
+# Revision:
+#           1.1 - Added load of bibs from BSLW.
+#
 ############################################################################################
 export HOME=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
 export WORK_DIR=`getpathname workdir`
@@ -41,6 +44,8 @@ export TODAY=`date +'%Y%m%d'`
 export NAME="[authbot.sh]"
 MAX_KEYS=1000000
 DELETE_KEYS_FILE=DEL.MRC.keys
+# BSLW always sends us the bibs MARC named 'BIB.MRC'
+BIB_MARC_FILE=BIB.MRC
 
 cd $HOME
 
@@ -48,11 +53,55 @@ if [ $1 ]
 then
 	MAX_KEYS=$1
 fi
-echo "$NAME MAX_KEYS set to $MAX_KEYS."
-echo "$NAME TODAY set to $TODAY."
+INIT_MSG=`date`' start ==='
+echo $INIT_MSG > log.txt
+echo "===" >> log.txt
+echo "$NAME MAX_KEYS set to $MAX_KEYS." >>log.txt
+echo "$NAME TODAY set to $TODAY." >>log.txt
+
+# First part: update your bibs. This is done because BSLW adds RDA tags 
+# into the bibs for us as part of their contract requirements.
+if [ -s $BIB_MARC_FILE ]
+then
+	# Do some reporting on the file we got.
+	if [ -s bibmatchpoint.sh ]
+	then
+		# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
+		bibmatchpoint.sh $BIB_MARC_FILE 2>&1 >>log.txt
+	else
+		echo "$NAME ** Warning: bibmatchpoint.sh not present in this directory." >>log.txt
+	fi
+	# -im (default) MARC records will be read from standard input.
+	# -a (required) specifies the format of the record.
+	# -b is followed by one option to indicate how bib records will be matched; 'f'(default) matches on the flexible key.
+	# -h is followed by one option to indicate how holdings will be determined; 'n' no holdings processing; no copy is created.
+	# -m indicates catalog creation/update/review mode; 'u' update if matched, never create.
+	# -f is followed by a list of options specifying how to use the flexible key; 'S' use the Sirsi number (035).
+	# -e specifies the filename for saving MARC records with errors.
+	cat $BIB_MARC_FILE | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
+	# Now copy all the affected catalog keys to ${workdir}/Batchkeys/adutext.keys in lieu of touchkeys on each.
+	# Adutext will throttle the load based on values specified in the report as outlined below.
+	# "In order to process a large amount of catalog keys, this file can be created 
+	# which will be partially processed with each adutext run.  The first 
+	# ${threshold} lines will be set to be picked up by adutext, then removed 
+	# from the file.  Eventually the file will be empty and removed.
+	# batchckeyfile=${workdir}/Batchkeys/adutext.keys
+	# threshold=20000"
+	if [ -s BIB.MRC.catkeys.lst ]
+	then
+		# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
+		cat BIB.MRC.catkeys.lst >>${BATCH_KEY_DIR}/adutext.keys
+	else
+		echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>log.txt
+	fi
+	# next make sure premarc.sh doesn't process this puppy because that will add time to processing.
+	rm $BIB_MARC_FILE
+fi
+
+# Pre-process all the other MARC files.
 if [ ! -s ./prepmarc.sh ]
 then
-	echo "$NAME ** script needs $HOME/premarc.sh to run!"
+	echo "$NAME ** script needs $HOME/premarc.sh to run!" >>log.txt
 	exit 1
 else
 	./prepmarc.sh
@@ -60,9 +109,9 @@ else
 	# The bi-product of that process is called: 'DEL.MRC.keys'
 	if [ -s $DELETE_KEYS_FILE ]
 	then
-		echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..."
+		echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>log.txt
 		cat $DELETE_KEYS_FILE | remauthority -u
-		echo "$NAME authorities deleted."
+		echo "$NAME authorities deleted." >>log.txt
 		# Now remove the file so we don't do this again if re-run.
 		rm $DELETE_KEYS_FILE
 	fi
@@ -83,22 +132,22 @@ then
 		randomselection.pl -r -fauthedit.keys >tmp.$$
 		if [ ! -s tmp.$$ ]
 		then
-			echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?"
+			echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?" >>log.txt
 			exit 1
 		fi
 		numKeys=$(cat tmp.$$ | wc -l)
 		if (( $numKeys <= $MAX_KEYS ))
 		then
-			echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys "
+			echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys " >>log.txt
 			# There may already be an authedit.keys file in the Batchkeys directory, if there is add to it,
 			# if not one will be created.
 			cat tmp.$$ >>${BATCH_KEY_DIR}/authedit.keys
 		else
-			echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested."
-			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'."
+			echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested." >>log.txt
+			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'." >>log.txt
 			exit 1
 		fi
 	fi
 fi
-echo "$NAME done."
+echo "$NAME end ===." >>log.txt
 #EOF
