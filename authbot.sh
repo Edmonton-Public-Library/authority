@@ -32,6 +32,8 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           1.3 - Added more reporting and simplified zip archive handling.
+#           1.2 - Added zip file handling.
 #           1.1 - Added load of bibs from BSLW.
 #
 ############################################################################################
@@ -54,10 +56,48 @@ then
 	MAX_KEYS=$1
 fi
 INIT_MSG=`date`' start ==='
-echo $INIT_MSG > authbot.txt
-echo "===" >> authbot.txt
-echo "$NAME MAX_KEYS set to $MAX_KEYS." >>authbot.txt
-echo "$NAME TODAY set to $TODAY." >>authbot.txt
+echo $INIT_MSG > authbot.log
+echo "$NAME ===" >> authbot.log
+# Do we need to clean up from previous runs?
+if [ -e AllAuthKeysAndIDs.lst ]
+then
+	echo "$NAME removing AllAuthKeysAndIDs.lst from last time" >> authbot.log
+	rm AllAuthKeysAndIDs.lst
+fi
+if ls *.MRC >/dev/null
+then
+	echo "$NAME removing MRC files from last time" >> authbot.log
+	rm *.MRC
+fi
+if ls BIB.MRC.*
+then
+	echo "$NAME removing BIB.MRC.* report files from last time" >> authbot.log
+	rm BIB.MRC.*
+fi
+# Here we will look for any zip file and unpack it. Don't worry if you don't find it,
+# the admin may have placed the required files in the directory manually.
+if ls *.zip >/dev/null
+then
+	count=0
+	declare -a zipFiles=(`ls *.zip`)
+	for file in "${zipFiles[@]}"
+	do
+		echo "$NAME Unzipping $file" >>authbot.log
+		if unzip $file *.MRC >>authbot.log
+		then
+			echo "$NAME removing $file" >>authbot.log
+			rm $file
+		fi
+		# Multiple zip files can be handled but are not because files from BSLW 
+		# contain duplicate names between files. We don't want to overwrite, but
+		# we could put the processing of the files into functions. For now just 
+		# clean and run again.
+		break 
+	done
+fi
+
+echo "$NAME MAX_KEYS set to $MAX_KEYS." >>authbot.log
+echo "$NAME TODAY set to $TODAY." >>authbot.log
 
 # First part: update your bibs. This is done because BSLW adds RDA tags 
 # into the bibs for us as part of their contract requirements.
@@ -67,9 +107,10 @@ then
 	if [ -s bibmatchpoint.sh ]
 	then
 		# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
-		bibmatchpoint.sh $BIB_MARC_FILE 2>&1 >>authbot.txt
+		bibmatchpoint.sh $BIB_MARC_FILE 2>&1 >>authbot.log
+		echo "$NAME finished running bibmatchpoint.sh." >>authbot.log
 	else
-		echo "$NAME ** Warning: bibmatchpoint.sh not present in this directory." >>authbot.txt
+		echo "$NAME ** Warning: bibmatchpoint.sh not present in this directory." >>authbot.log
 	fi
 	# -im (default) MARC records will be read from standard input.
 	# -a (required) specifies the format of the record.
@@ -78,7 +119,9 @@ then
 	# -m indicates catalog creation/update/review mode; 'u' update if matched, never create.
 	# -f is followed by a list of options specifying how to use the flexible key; 'S' use the Sirsi number (035).
 	# -e specifies the filename for saving MARC records with errors.
+	echo "$NAME running catalogload." >>authbot.log
 	cat $BIB_MARC_FILE | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
+	echo "$NAME done catalogload." >>authbot.log
 	# Now copy all the affected catalog keys to ${workdir}/Batchkeys/adutext.keys in lieu of touchkeys on each.
 	# Adutext will throttle the load based on values specified in the report as outlined below.
 	# "In order to process a large amount of catalog keys, this file can be created 
@@ -90,9 +133,10 @@ then
 	if [ -s BIB.MRC.catkeys.lst ]
 	then
 		# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
+		echo "$NAME appending keys to ${BATCH_KEY_DIR}/adutext.keys" >>authbot.log
 		cat BIB.MRC.catkeys.lst >>${BATCH_KEY_DIR}/adutext.keys
 	else
-		echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>authbot.txt
+		echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>authbot.log
 	fi
 	# next make sure premarc.sh doesn't process this puppy because that will add time to processing.
 	rm $BIB_MARC_FILE
@@ -101,17 +145,18 @@ fi
 # Pre-process all the other MARC files.
 if [ ! -s ./prepmarc.sh ]
 then
-	echo "$NAME ** script needs $HOME/premarc.sh to run!" >>authbot.txt
+	echo "$NAME ** script needs $HOME/premarc.sh to run!" >>authbot.log
 	exit 1
 else
+	echo "$NAME running prepmarc.sh" >>authbot.log
 	./prepmarc.sh
 	# prepmarc.sh knows how to process delete marc files.
 	# The bi-product of that process is called: 'DEL.MRC.keys'
 	if [ -s $DELETE_KEYS_FILE ]
 	then
-		echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>authbot.txt
+		echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>authbot.log
 		cat $DELETE_KEYS_FILE | remauthority -u
-		echo "$NAME authorities deleted." >>authbot.txt
+		echo "$NAME authorities deleted." >>authbot.log
 		# Now remove the file so we don't do this again if re-run.
 		rm $DELETE_KEYS_FILE
 	fi
@@ -128,26 +173,30 @@ then
 		# We have found that if you randomize your keys you can distribute SUBJ changes over a number of nights
 		# you can improve your adutext run times by spreading them over a couple of nights rather than doing them
 		# all at once.
-		echo "Randomizing the keys for smoother adutext loading."
+		echo "$NAME Randomizing the keys for smoother adutext loading."
 		randomselection.pl -r -fauthedit.keys >tmp.$$
 		if [ ! -s tmp.$$ ]
 		then
-			echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?" >>authbot.txt
+			echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?" >>authbot.log
 			exit 1
 		fi
 		numKeys=$(cat tmp.$$ | wc -l)
 		if (( $numKeys <= $MAX_KEYS ))
 		then
-			echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys " >>authbot.txt
+			echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys " >>authbot.log
 			# There may already be an authedit.keys file in the Batchkeys directory, if there is add to it,
 			# if not one will be created.
-			cat tmp.$$ >>${BATCH_KEY_DIR}/authedit.keys
+			if cat tmp.$$ >>${BATCH_KEY_DIR}/authedit.keys
+			then
+				rm tmp.$$
+			fi
 		else
-			echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested." >>authbot.txt
-			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'." >>authbot.txt
+			echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested." >>authbot.log
+			echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'." >>authbot.log
 			exit 1
 		fi
 	fi
 fi
-echo "$NAME end ===." >>authbot.txt
+
+echo "$NAME end ===." >>authbot.log
 #EOF
