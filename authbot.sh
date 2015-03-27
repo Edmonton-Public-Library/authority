@@ -32,6 +32,7 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           2.1 - Also does no-zip processing. Fixes out of date MRC files bug.
 #           2.0 - Functionalized the loads so I can do multiple zip files.
 #           1.3 - Added more reporting and simplified zip archive handling.
 #           1.2 - Added zip file handling.
@@ -104,6 +105,20 @@ function do_update {
 			# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
 			echo "$NAME appending keys to ${BATCH_KEY_DIR}/adutext.keys" >>authbot.log
 			cat BIB.MRC.catkeys.lst >>${BATCH_KEY_DIR}/adutext.keys
+			# Since we don't want the same key to be processed multiple times because this function 
+			# can be run  multiple times for two bib.MRC files; one for changes from LC and one for changes
+			# that resulted from submissions from us, we will sort and uniq the keys now.
+			if [ -e ${BATCH_KEY_DIR}/adutext.keys ]
+			then
+				cat ${BATCH_KEY_DIR}/adutext.keys | sort -r | uniq > temp_sort_keys.$$
+				if [ -s temp_sort_keys.$$ ]
+				then
+					if cp temp_sort_keys.$$ ${BATCH_KEY_DIR}/adutext.keys
+					then
+						rm temp_sort_keys.$$
+					fi
+				fi
+			fi
 		else
 			echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>authbot.log
 		fi
@@ -200,6 +215,12 @@ then
 		rm *.MRC
 		echo "$NAME removing any BIB.MRC.* report files from last time" >> authbot.log
 		rm BIB.MRC.*
+		# Also prepmarc.sh creates and checks for '._marc_.txt' and if the marc files are 
+		# younger than the last time stamp it won't process them. Remove the old one here.
+		if [ -e "._marc_.txt" ]
+		then
+			rm ._marc_.txt
+		fi
 		echo "$NAME Unzipping $file" >>authbot.log
 		if unzip $file *.MRC >>authbot.log
 		then
@@ -209,6 +230,8 @@ then
 		# Call the function that will do all the processing on DEL.MRC Bibs and authorities.
 		do_update 
 	done
+else # No zip files but could be MRCs here dropped by admin.
+	do_update
 fi
 
 echo "$NAME end ===." >>authbot.log
