@@ -50,9 +50,24 @@ DELETE_KEYS_FILE=DEL.MRC.keys
 # BSLW always sends us the bibs MARC named 'BIB.MRC'
 BIB_MARC_FILE=BIB.MRC
 
+
+# Lets go to the directory where all this is going to be done.
+cd $HOME
+
+if [ $1 ]
+then
+	MAX_KEYS=$1
+fi
+INIT_MSG=`date`' start ==='
+echo $INIT_MSG > authbot.log
+echo "$NAME ===" >> authbot.log
+
+
+
+
+
 # Function to manage each the bib load, delete and adds and changes to authorities.
-do_update ()
-{
+function do_update {
 	# First part: update your bibs. This is done because BSLW adds RDA tags 
 	# into the bibs for us as part of their contract requirements.
 	if [ -s $BIB_MARC_FILE ]
@@ -153,30 +168,23 @@ do_update ()
 	fi
 } # End of do do_update()
 
-cd $HOME
 
-if [ $1 ]
-then
-	MAX_KEYS=$1
-fi
-INIT_MSG=`date`' start ==='
-echo $INIT_MSG > authbot.log
-echo "$NAME ===" >> authbot.log
 # Do we need to clean up from previous runs?
 if [ -e AllAuthKeysAndIDs.lst ]
 then
 	echo "$NAME removing AllAuthKeysAndIDs.lst from last time" >> authbot.log
 	rm AllAuthKeysAndIDs.lst
 fi
-if ls *.MRC >/dev/null
+if [ -e authedit.keys ]
 then
-	echo "$NAME removing MRC files from last time" >> authbot.log
-	rm *.MRC
+	echo "$NAME removing authedit.keys from last time" >> authbot.log
+	rm authedit.keys
 fi
-if ls BIB.MRC.*
+# Get rid of the previous flat files if exists.
+if ls *.flat >/dev/null
 then
-	echo "$NAME removing BIB.MRC.* report files from last time" >> authbot.log
-	rm BIB.MRC.*
+	echo "$NAME removing *.flat  files from last time" >> authbot.log
+	rm *.flat
 fi
 
 echo "$NAME MAX_KEYS set to $MAX_KEYS." >>authbot.log
@@ -188,6 +196,10 @@ then
 	declare -a zipFiles=(`ls *.zip`)
 	for file in "${zipFiles[@]}"
 	do
+		echo "$NAME removing any MRC files from last time" >> authbot.log
+		rm *.MRC
+		echo "$NAME removing any BIB.MRC.* report files from last time" >> authbot.log
+		rm BIB.MRC.*
 		echo "$NAME Unzipping $file" >>authbot.log
 		if unzip $file *.MRC >>authbot.log
 		then

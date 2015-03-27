@@ -18,6 +18,7 @@
 #
 # Processes all the MARC files in the directory into flat files for testing and loading.
 # Version:
+# 1.3 - Removed log removal and added more output to log.
 # 1.2 - Added pipe from flatskip to Bincustom/nowrap.pl.
 # 1.1 - Added code append to a single fix.flat file, and remove before the process starts.
 #       Fixed comments. Added code to remove old fix.flat if there are more than on new
@@ -39,7 +40,7 @@ if [ -e $HOME ]
 then
 	cd $HOME
 else
-	echo "$NAME **error: invalid configuration. '$HOME' doesn't exist."
+	echo "$NAME **error: invalid configuration. '$HOME' doesn't exist." >>log.txt
 	exit 1
 fi
 
@@ -53,7 +54,7 @@ then
 	LAST_RUN=`cat tmp.$$`
 	# LAST_RUN_DATE=`stat -c %y $TOUCH_FILE`
 else
-	echo "$NAME no $TOUCH_FILE found, will process all MARC files in directory."
+	echo "$NAME no $TOUCH_FILE found, will process all MARC files in directory." >>log.txt
 fi
 
 # Here we will get a list of all the new MARC files and process them.
@@ -68,9 +69,6 @@ echo "$NAME cleaning out old files"
 # ...clean out the fix.flat file, it's a temp file any way.
 if [ -s fix.flat ]; then
 	rm fix.flat
-fi
-if [ -s log.txt ]; then
-	rm log.txt
 fi
 
 ## now loop through the above array
@@ -95,4 +93,4 @@ done
 rm tmp.$$
 # Touch the file so the next time it runs we can compare which files were added after we run now.
 touch $TOUCH_FILE
-echo "$NAME $marcFileCount fresh files done."
+echo "$NAME $marcFileCount fresh files done." >>log.txt
