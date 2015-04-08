@@ -18,6 +18,7 @@
 #
 # Processes all the MARC files in the directory into flat files for testing and loading.
 # Version:
+# 1.4 - Added convMarc to retain UTF-8 on dump from flatskip.
 # 1.3 - Removed log removal and added more output to log.
 # 1.2 - Added pipe from flatskip to Bincustom/nowrap.pl.
 # 1.1 - Added code append to a single fix.flat file, and remove before the process starts.
@@ -81,7 +82,8 @@ do
 	then
 		marcFileCount=$[$marcFileCount +1]
 		echo "$NAME Found a fresh MARC file: '$file'. Processing: # $marcFileCount..."
-		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
+		# cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
+		cat $file | flatskip -im -aMARC -of | convMarc -tu | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
 		if [ $file = 'DEL.MRC' ]
 		then
 			cat $file.flat | ./authority.pl -d > $file.keys 2>>log.txt
