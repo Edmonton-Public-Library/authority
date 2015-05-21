@@ -527,3 +527,111 @@ authbot.sh   - is a driver script that runs prepmarc.sh and authority.pl in a co
        a DEL.MRC.keys file it will use remauthority to remove the authorities. If a fix.flat file exists, it will load the 
        flat file with authload with switches to update if possible and create anything it can't find.
 	   
+	   
+== More issues ==
+Staff have noticed some problems: 
+bash-3.2$ echo 1386471 | catalogdump -om | convMarc -tu
+Symphony $<catalog:u> $<dump> 3.4.1 $<started_on> $<wednesday:u>, $<april:u> 8, 2015, 4:38 PM
+$(1222)
+$(3364)
+$(3398)
+$(3394)
+  1 $<catalog> $(1303)
+  1 $<bib> $<MARC> $(1303)
+  0 $<item> $(1303)
+Symphony $<catalog:u> $<dump> $<finished_on> $<wednesday:u>, $<april:u> 8, 2015, 4:38 PM
+01039cas a22003492  4500001001100000003000400011005001700015006001900032007001500051008004100066022001400107035002300121035002200144035001900166035002000185040002300205042001100228050000700239099002000246222002400266245004000290264004300330310002600373336002100399337002300420338003200443596000600475651003700481776005800518780003300576856008000609
+ebs106803eEBZ20150320204613.0m        d  ||||||cr unu||||||||800122c19uu9999quczn ne      0   a0eng d  a0384-1294  
+a(Sirsi) ebs106803e  a(CaAE) ebs106803e  a(OCoLC)5901687  a(EBZ)ebs106803e  aVtU dEBZdUtOrBLW  aisds/c14aAN  
+aInternet Access 0aGazetteb(Montreal)04aThe Gazetteh[electronic resource]. 1aMontreal :b[publisher not identified]  
+aDaily except Sundays.  atext2rdacontent  acomputer2rdamedia  aonline resource2rdacarrier  a1 0aMontraeal (Quaebec)
+vNewspapers.1 tThe Gazettex0384-1294 w(OCoLC)5901687 wcn 8531167200tMontraeal gazettex0839-32574 
+zRead it Online.uhttp://atoz.ebsco.com/direct.asp?id=8717&reso1 MARC records read
+0 MARC records in error
+1 records successfully converted.
+0 records converted with warnings.  See error log.
+urceid=106803
+
+
+cat key
+1386471|
+bash-3.2$ echo ebs106803e | selcatalog -iF | catalogdump -oF
+Symphony $<catalog> $<selection> 3.4.1 $<started_on> $<wednesday:u>, $<april:u> 8, 2015, 4:47 PM
+$(2271)
+$(1232)
+Symphony $<catalog:u> $<dump> 3.4.1 $<started_on> $<wednesday:u>, $<april:u> 8, 2015, 4:47 PM
+  1 $<catalog> $(1308)
+  1 $<catalog> $(1309)
+Symphony $<catalog> $<selection> $<finished_on> $<wednesday:u>, $<april:u> 8, 2015, 4:47 PM
+$(1222)
+$(3363)
+$(3398)
+$(3394)
+*** DOCUMENT BOUNDARY ***
+FORM=SERIAL
+.000. |aas2 0c
+.001. |aebs106803e
+.003. |aEBZ
+.005. |a20150320204613.0
+.006. |am        d  ||||||
+.007. |acr unu||||||||
+.008. |a800122c19uu9999quczn ne      0   a0eng d
+.022.   |a0384-1294
+.035.   |a(Sirsi) ebs106803e
+.035.   |a(CaAE) ebs106803e
+.035.   |a(OCoLC)5901687
+.035.   |a(EBZ)ebs106803e
+.040.   |aVtU |dEBZ|dUtOrBLW
+.042.   |aisds/c
+.050. 14|aAN
+.099.   |aInternet Access
+.222.  0|aGazette|b(Montreal)
+.245. 04|aThe Gazette|h[electronic resource].
+.264.  1|aMontreal :|b[publisher not identified]
+.310.   |aDaily except Sundays.
+.336.   |atext|2rdacontent
+.337.   |acomputer|2rdamedia
+.338.   |aonline resource|2rdacarrier
+.596.   |a1
+.651.  0|aMontraeal (Quaebec)|vNewspapers.
+.776. 1 |tThe Gazette|x0384-1294 |w(OCoLC)5901687 |wcn 85311672
+.780. 00|tMontraeal gazette|x0839-3257
+.856. 4 |zRead it Online.|uhttp://atoz.ebsco.com/direct.asp?id=8717&resourceid=106803
+  1 $<catalog> $(1303)
+  1 $<bib> $<MARC> $(1303)
+  0 $<item> $(1303)
+Symphony $<catalog:u> $<dump> $<finished_on> $<wednesday:u>, $<april:u> 8, 2015, 4:47 PM
+
+Notice how Montreal is spelt correctly in tag 222 but incorrectly in the 780.
+
+This is what we sent to BSLW: '20150320_EPL_Catalog_Records.flat'
+Line No.
+4312399 *** DOCUMENT BOUNDARY ***
+4312400 FORM=LCSH
+4312401 .000. |aas2 0c
+4312402 .001. |aebs106803e
+4312403 .003. |aEBZ
+4312404 .006. |am        d  ||||||
+4312405 .007. |acr|unu||||||||
+4312406 .008. |a800122c19uu9999quczn ne      0   a0eng d
+4312407 .022.   |a0384-1294
+4312408 .035.   |a(Sirsi) ebs106803e
+4312409 .035.   |a(CaAE) ebs106803e
+4312410 .035.   |a(OCoLC)5901687
+4312411 .035.   |a(EBZ)ebs106803e
+4312412 .040.   |aVtU |dEBZ
+4312413 .042.   |aisds/c
+4312414 .050. 14|aAN
+4312415 .099.   |aInternet Access
+4312416 .222.  0|aGazette|b(Montreal)
+4312417 .245. 04|aThe Gazette|h[electronic resource].
+4312418 .260.   |aMontreal.
+4312419 .310.   |aDaily except Sundays.
+4312420 .651.  0|aMontraeal (Quaebec)|vNewspapers.
+4312421 .776. 1 |tThe Gazette|x0384-1294 |w(OCoLC)5901687 |wcn 85311672
+4312422 .780. 00|tMontraeal gazette|x0839-3257
+4312423 .856. 4 |zRead it Online.|uhttp://atoz.ebsco.com/direct.asp?id=8717&resourceid=106803
+4312424 .596.   |a1
+
+To fix this I have started to reverse engineer the way that ANSEL is corrupted on output.
+

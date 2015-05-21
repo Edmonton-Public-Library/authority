@@ -152,7 +152,13 @@ function do_update {
 	then
 		# Authload doesn't do any touchkeys so we have to put all of the effected keys into 
 		# the ${WORK_DIR}/Batchkeys/authedit.keys file for adutext to find and process over the nights to come.
-		cat fix.flat | convMarc -ta | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
+		# cat fix.flat | convMarc -ta | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
+		# *** Warning ***
+		# The next line doesn't include convMarc because experiments show that convMarc does not work with authorities.
+		# To load the authorities while preserving diacritics, use MarcEdit to convert to marc-8, compile to mrc, and load
+		# directly with the following line.
+		# *** Warning ***
+		cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
 		if [ -s authedit.keys ]
 		then
 			# We have found that if you randomize your keys you can distribute SUBJ changes over a number of nights
