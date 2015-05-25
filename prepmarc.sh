@@ -16,8 +16,22 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 #
-# Processes all the MARC files in the directory into flat files for testing and loading.
+# Processes all the Authority MARC files in the directory into flat files for testing and loading.
+# *************************** WARNING *********************************
+# PLEASE ENSURE ALL AUTHORITY MARC FILES ARE CONVERTED FROM UTF-8 TO MARC-8 BEFORE RUNNING.
+# == Processing instructions until we move to native UTF-8 ==
+# Export the mrc files from the zip archive. Since both archives contain TITLE.NEW.MRC etc, it behoves you to extract into separate folders.
+# Open the authority files (basically all files '''except BIB.MRC''') in MarcEdit by double-click on MRC file.
+# For each file in-turn, 
+## Select execute to convert the MRC into MRK plain text.
+## Select edit records.
+## In the MarcEdit editor select File>Compile File into MARC, selecting save as MARC-8 MARC File (*.mrc) as the Save as type.
+# You can confirm that the file has been processed correctly if you double-click the MARC-8 version of a file and search for accented characters. You should not see {ecute} or similar annotations.
+# '''Note''': these instructions are not required for BIB.MRC because convMarc will convert bib marc files.
+# *************************** WARNING *********************************
 # Version:
+# 1.5 - Important change to NOT use convMarc because it doesn't work on authority MARC files.
+#       Added prompt for each file to ensure user accepts responsibility for having authorities in correct format.
 # 1.4 - Added convMarc to retain UTF-8 on dump from flatskip.
 # 1.3 - Removed log removal and added more output to log.
 # 1.2 - Added pipe from flatskip to Bincustom/nowrap.pl.
@@ -81,13 +95,33 @@ do
 	if (( "$LAST_RUN" < "$myFileTime" ))
 	then
 		marcFileCount=$[$marcFileCount +1]
+		# Let's just make sure the person running this has read the warning above.
+		echo -n "*** WARNING: Are you sure $file is MARC-8 so we don't break our diacritics? y[n]: "
+		read imsure
+		if [ "$imsure" != "y" ]
+		then
+			echo "... it's ok to be cautious, exiting."
+			exit 1
+		fi
 		echo "$NAME Found a fresh MARC file: '$file'. Processing: # $marcFileCount..."
-		# cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
-		cat $file | flatskip -im -aMARC -of | convMarc -tu | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
+		# The next process should remain as is because convMarc doesn't handle authority marc files.
+		# == Processing instructions until we move to native UTF-8 ==
+		# Export the mrc files from the zip archive. Since both archives contain TITLE.NEW.MRC etc, it behoves you to extract into separate folders.
+		# Open the authority files (basically all files '''except BIB.MRC''') in MarcEdit by double-click on MRC file.
+		# For each file in-turn, 
+		## Select execute to convert the MRC into MRK plain text.
+		## Select edit records.
+		## In the MarcEdit editor select File>Compile File into MARC, selecting save as MARC-8 MARC File (*.mrc) as the Save as type.
+		# You can confirm that the file has been processed correctly if you double-click the MARC-8 version of a file and search for accented characters. You should not see {ecute} or similar annotations.
+		# '''Note''': these instructions are not required for BIB.MRC because convMarc will convert bib marc files.
+		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
+		# cat $file | convMarc -tu | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
 		if [ $file = 'DEL.MRC' ]
 		then
+			# Of which there is 1 in every shipment, but only found in the *N.zip file.
 			cat $file.flat | ./authority.pl -d > $file.keys 2>>log.txt
 		else
+			# Which you don't get with *C.zip
 			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
 		fi
 	fi

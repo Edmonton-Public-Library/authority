@@ -32,7 +32,8 @@
 #          than the maximum expected authorities.
 #
 # Revision:
-#           2.2 - Added convMarc to retain UTF-8 on load of bibs and authorities.
+#           2.2 - Added convMarc to retain UTF-8 on load of bibs but not authorities, 
+#                 because it doesn't work on authorities.
 #           2.1 - Also does no-zip processing. Fixes out of date MRC files bug.
 #           2.0 - Functionalized the loads so I can do multiple zip files.
 #           1.3 - Added more reporting and simplified zip archive handling.
@@ -111,7 +112,7 @@ function do_update {
 			# that resulted from submissions from us, we will sort and uniq the keys now.
 			if [ -e ${BATCH_KEY_DIR}/adutext.keys ]
 			then
-				cat ${BATCH_KEY_DIR}/adutext.keys | sort -r | uniq > temp_sort_keys.$$
+				cat ${BATCH_KEY_DIR}/adutext.keys | sort -rn | uniq > temp_sort_keys.$$
 				if [ -s temp_sort_keys.$$ ]
 				then
 					if cp temp_sort_keys.$$ ${BATCH_KEY_DIR}/adutext.keys
@@ -152,12 +153,12 @@ function do_update {
 	then
 		# Authload doesn't do any touchkeys so we have to put all of the effected keys into 
 		# the ${WORK_DIR}/Batchkeys/authedit.keys file for adutext to find and process over the nights to come.
-		# cat fix.flat | convMarc -ta | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
 		# *** Warning ***
 		# The next line doesn't include convMarc because experiments show that convMarc does not work with authorities.
 		# To load the authorities while preserving diacritics, use MarcEdit to convert to marc-8, compile to mrc, and load
 		# directly with the following line.
 		# *** Warning ***
+		# -fc: use 001 as match, -mb: update if possible, otherwise create, -q: set authorized date.
 		cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
 		if [ -s authedit.keys ]
 		then
@@ -190,25 +191,35 @@ function do_update {
 	fi
 } # End of do do_update()
 
-
+# This file is all the authority keys and IDs on our system output in pipe-delimited 
+# output format. It is created by authority.pl. This file is a conveinence because it
+# takes quite a few minutes to output all the keys, this will save time, on the other
+# hand if you have an old file it may produce misleading results. It is always safe to 
+# remove this file, authority.pl will create another if it doesn't find one.
 # Do we need to clean up from previous runs?
 if [ -e AllAuthKeysAndIDs.lst ]
 then
 	echo "$NAME removing AllAuthKeysAndIDs.lst from last time" >> authbot.log
 	rm AllAuthKeysAndIDs.lst
 fi
+# If this hasn't been run since last month, or last zip file, we want to ensure that the old work is removed.
+# This file is generated as a bi-product of the authload process and is handy to determine what 
+# records were affected.
 if [ -e authedit.keys ]
 then
 	echo "$NAME removing authedit.keys from last time" >> authbot.log
 	rm authedit.keys
 fi
-# Get rid of the previous flat files if exists.
+# Get rid of the previous flat files too.
+# Tools like flatskip convert MARC into flat for loading by authload. Authority.pl also
+# creates a fixed flat file that contains all the 001 match points normalized to upper case
+# No spaces.
 if ls *.flat >/dev/null
 then
 	echo "$NAME removing *.flat  files from last time" >> authbot.log
 	rm *.flat
 fi
-
+# Initialize the logs for this run.
 echo "$NAME MAX_KEYS set to $MAX_KEYS." >>authbot.log
 echo "$NAME TODAY set to $TODAY." >>authbot.log
 # Here we will look for any zip file and unpack it. Don't worry if you don't find it,
@@ -229,6 +240,7 @@ then
 			rm ._marc_.txt
 		fi
 		echo "$NAME Unzipping $file" >>authbot.log
+		# Clean (rm) zip file so we don't do this over and over.
 		if unzip $file *.MRC >>authbot.log
 		then
 			echo "$NAME removing $file" >>authbot.log
