@@ -30,6 +30,7 @@
 # '''Note''': these instructions are not required for BIB.MRC because convMarc will convert bib marc files.
 # *************************** WARNING *********************************
 # Version:
+# 1.6 - Remove interactive mode because we only handle Unicode, we aren't worried about loading Unicode over ANSEL.
 # 1.5 - Important change to NOT use convMarc because it doesn't work on authority MARC files.
 #       Added prompt for each file to ensure user accepts responsibility for having authorities in correct format.
 # 1.4 - Added convMarc to retain UTF-8 on dump from flatskip.
@@ -96,13 +97,13 @@ do
 	then
 		marcFileCount=$[$marcFileCount +1]
 		# Let's just make sure the person running this has read the warning above.
-		echo -n "*** WARNING: Are you sure $file is MARC-8 so we don't break our diacritics? y[n]: "
-		read imsure
-		if [ "$imsure" != "y" ]
-		then
-			echo "... it's ok to be cautious, exiting."
-			exit 1
-		fi
+		# echo -n "*** WARNING: Are you sure $file is MARC-8 so we don't break our diacritics? y[n]: "
+		# read imsure
+		# if [ "$imsure" != "y" ]
+		# then
+			# echo "... it's ok to be cautious, exiting."
+			# exit 1
+		# fi
 		echo "$NAME Found a fresh MARC file: '$file'. Processing: # $marcFileCount..."
 		# The next process should remain as is because convMarc doesn't handle authority marc files.
 		# == Processing instructions until we move to native UTF-8 ==
@@ -115,7 +116,6 @@ do
 		# You can confirm that the file has been processed correctly if you double-click the MARC-8 version of a file and search for accented characters. You should not see {ecute} or similar annotations.
 		# '''Note''': these instructions are not required for BIB.MRC because convMarc will convert bib marc files.
 		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
-		# cat $file | convMarc -tu | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
 		if [ $file = 'DEL.MRC' ]
 		then
 			# Of which there is 1 in every shipment, but only found in the *N.zip file.

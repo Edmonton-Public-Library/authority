@@ -32,6 +32,7 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           2.3 - Remove convMarc and interactive mode. 
 #           2.2 - Added convMarc to retain UTF-8 on load of bibs but not authorities, 
 #                 because it doesn't work on authorities.
 #           2.1 - Also does no-zip processing. Fixes out of date MRC files bug.
@@ -92,7 +93,8 @@ function do_update {
 		# -f is followed by a list of options specifying how to use the flexible key; 'S' use the Sirsi number (035).
 		# -e specifies the filename for saving MARC records with errors.
 		echo "$NAME running catalogload." >>authbot.log
-		cat $BIB_MARC_FILE | convMarc -ta | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
+		# cat $BIB_MARC_FILE | convMarc -ta | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
+		cat $BIB_MARC_FILE | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
 		echo "$NAME done catalogload." >>authbot.log
 		# Now copy all the affected catalog keys to ${workdir}/Batchkeys/adutext.keys in lieu of touchkeys on each.
 		# Adutext will throttle the load based on values specified in the report as outlined below.

@@ -1,8 +1,47 @@
 === Mon Dec 22 10:07:38 MST 2014 ===
 
-Project Notes
--------------
 
+
+Update February 20, 2016
+========================
+From: Stephanie Hansen [mailto:shansen@bslw.com] 
+Sent: February-19-16 12:30 PM
+To: Shona Dippie; ILS Admins
+Cc: Stephanie Hansen
+Subject: Edmonton Public Library (CNEDM) - February Authority Notification & Current Cataloging
+
+We have completed your MARS Authority Notification and Current Cataloging Services. Your output files are ready to be picked up on our FTP site. Clicking on the links below will automatically begin the download process.
+Note: This month we’ve added a custom step that allows us to export any authorities that were added during the update process that have a date newer than the date in the record you sent us (example: the Mickey Mouse record you pointed out a couple weeks ago). The records that are exported are split by usage (name and subject), but each file contains the same records. When we add authorities, we add the usages that are set within those records, and in most cases those are both name and subject, so they will export into both files. If you have any questions, just let me know. You’ll start seeing these files every month now.
+
+[I have changed the order from the original email to show the correct ordering according to BSLW]
+updates: CNEDM1602U.zip
+notif:   CNEDM1602N.zip
+curcat:  CNEDM1602C.zip
+
+Notification (load first):
+
+DEL.MRC - 46 records
+NAME.CHG.MRC - 1,690 records
+NAME.NEW.MRC - 244 records
+SERIES.CHG.MRC - 31 records
+SUBJ.CHG.MRC - 1,392 records
+SUBJ.NEW.MRC - 44 records
+TITLE.CHG.MRC - 44 records
+TITLE.NEW.MRC - 3 records
+
+Current Cataloging (load second):
+
+BIB.MRC - 7,060 records
+NAME.NEW.MRC - 2,031 records
+SUBJ.NEW.MRC - 250 records
+
+Updates (load last):
+
+NAME.NEW.MRC – 82 records
+SUBJ.NEW.MRC – 82 records
+
+Project Notes
+=============
 Instructions for Running:
 Validate an incoming or outgoing flat files -v shows all warnings (use "update" to not show failed matches on new
 records). '-o' will output all changes. Unmatched authority IDs will be output untouched, but matching authority IDs 
