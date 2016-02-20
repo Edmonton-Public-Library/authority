@@ -14,9 +14,9 @@ We have completed your MARS Authority Notification and Current Cataloging Servic
 Note: This month we’ve added a custom step that allows us to export any authorities that were added during the update process that have a date newer than the date in the record you sent us (example: the Mickey Mouse record you pointed out a couple weeks ago). The records that are exported are split by usage (name and subject), but each file contains the same records. When we add authorities, we add the usages that are set within those records, and in most cases those are both name and subject, so they will export into both files. If you have any questions, just let me know. You’ll start seeing these files every month now.
 
 [I have changed the order from the original email to show the correct ordering according to BSLW]
-updates: CNEDM1602U.zip
 notif:   CNEDM1602N.zip
 curcat:  CNEDM1602C.zip
+updates: CNEDM1602U.zip
 
 Notification (load first):
 

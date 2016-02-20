@@ -32,6 +32,7 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           3.0 - Order of loading zip files matters now; added control to enforce order. 
 #           2.3 - Remove convMarc and interactive mode. 
 #           2.2 - Added convMarc to retain UTF-8 on load of bibs but not authorities, 
 #                 because it doesn't work on authorities.
@@ -224,8 +225,49 @@ fi
 # Initialize the logs for this run.
 echo "$NAME MAX_KEYS set to $MAX_KEYS." >>authbot.log
 echo "$NAME TODAY set to $TODAY." >>authbot.log
-# Here we will look for any zip file and unpack it. Don't worry if you don't find it,
-# the admin may have placed the required files in the directory manually.
+# BSLW has switched things up a bit. Now they send mods too so order of loading matters.
+# The files are called  CNEDM1602U.zip, CNEDM1602N.zip, and CNEDM1602C.zip
+# They have to be loaded in this order
+# notif:   CNEDM1602N.zip
+# curcat:  CNEDM1602C.zip
+# updates: CNEDM1602U.zip
+# That is New, Changes, and Updates. If we load updates first changes will overwrite and we don'ta
+# get the results we want. See README for more information.
+# To to that we are going to rename the files so they are always picked in the right by the remaining process.
+new_zip=`ls *N.zip`
+change_zip=`ls *C.zip`
+update_zip=`ls *U.zip`
+if [ -f "$new_zip" ]
+then
+	echo "renaming $new_zip to A.zip." >>authbot.log
+	mv $new_zip A.zip
+else
+	echo "**error Failed to find new authorities. Should be named '$new_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
+	echo "**error Failed to find new authorities. Should be named '$new_zip'. Load order of files from BSLW is important. exiting."
+	exit 1
+fi
+# Now the changes
+if [ -f "$change_zip" ]
+then
+	echo "renaming $change_zip to B.zip." >>authbot.log
+	mv $change_zip B.zip
+else
+	echo "**error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
+	echo "**error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting."
+	exit 1
+fi
+# and finally updates.
+if [ -f "$update_zip" ]
+then
+	echo "renaming $update_zip to C.zip." >>authbot.log
+	mv $update_zip C.zip
+else
+	echo "**error Failed to find update authorities. Should be named '$update_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
+	echo "**error Failed to find update authorities. Should be named '$update_zip'. Load order of files from BSLW is important. exiting."
+	exit 1
+fi
+
+# Here we will look for any zip file and unpack it.
 if ls *.zip >/dev/null
 then
 	declare -a zipFiles=(`ls *.zip`)
