@@ -32,6 +32,7 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           3.1 - Return to previous zip submission loading but maintain control of load order. 
 #           3.0 - Order of loading zip files matters now; added control to enforce order. 
 #           2.3 - Remove convMarc and interactive mode. 
 #           2.2 - Added convMarc to retain UTF-8 on load of bibs but not authorities, 
@@ -236,7 +237,6 @@ echo "$NAME TODAY set to $TODAY." >>authbot.log
 # To to that we are going to rename the files so they are always picked in the right by the remaining process.
 new_zip=`ls *N.zip`
 change_zip=`ls *C.zip`
-update_zip=`ls *U.zip`
 if [ -f "$new_zip" ]
 then
 	echo "renaming $new_zip to A.zip." >>authbot.log
@@ -254,16 +254,6 @@ then
 else
 	echo "**error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
 	echo "**error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting."
-	exit 1
-fi
-# and finally updates.
-if [ -f "$update_zip" ]
-then
-	echo "renaming $update_zip to C.zip." >>authbot.log
-	mv $update_zip C.zip
-else
-	echo "**error Failed to find update authorities. Should be named '$update_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
-	echo "**error Failed to find update authorities. Should be named '$update_zip'. Load order of files from BSLW is important. exiting."
 	exit 1
 fi
 
