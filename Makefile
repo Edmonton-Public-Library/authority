@@ -36,26 +36,23 @@ BIB_APP=bibmatchpoint.sh
 PREP_APP=prepmarc.sh
 AUTH_BOT=authbot.sh
 ARGS=-x
-.PHONY: put test production all authbot prepmarc
+.PHONY: compile test production all
 
-put: test ${BIB_APP} authbot prepmarc
-	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
-	scp ${LOCAL}${BIB_APP} ${USER}@${TEST_SERVER}:${REMOTE}
-	ssh ${USER}@${TEST_SERVER} '${REMOTE}${APP} ${ARGS}'
-	
-authbot: ${AUTH_BOT}
-	scp ${LOCAL}${AUTH_BOT} ${USER}@${TEST_SERVER}:${REMOTE}
-	scp ${LOCAL}${AUTH_BOT} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
-	
-prepmarc: ${PREP_APP}
-	scp ${LOCAL}${PREP_APP} ${USER}@${TEST_SERVER}:${REMOTE}
-	scp ${LOCAL}${PREP_APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
-	
-test:
+compile:
 	perl -c ${APP}
 
-production: test ${BIB_APP} authbot prepmarc
+test: ${LOCAL}${AUTH_BOT} ${LOCAL}${PREP_APP} ${LOCAL}${APP} ${LOCAL}${BIB_APP} compile
+	scp ${LOCAL}${AUTH_BOT} ${USER}@${TEST_SERVER}:${REMOTE}
+	scp ${LOCAL}${PREP_APP} ${USER}@${TEST_SERVER}:${REMOTE}
+	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
+	scp ${LOCAL}${BIB_APP} ${USER}@${TEST_SERVER}:${REMOTE}
+	# ssh ${USER}@${TEST_SERVER} '${REMOTE}${APP} ${ARGS}'
+
+production: ${LOCAL}${AUTH_BOT} ${LOCAL}${PREP_APP} ${LOCAL}${APP} ${LOCAL}${BIB_APP} compile 
+	scp ${LOCAL}${AUTH_BOT} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
+	scp ${LOCAL}${PREP_APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
 	scp ${LOCAL}${APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
 	scp ${LOCAL}${BIB_APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
+	# ssh ${USER}@${PRODUCTION_SERVER} '${REMOTE}${APP} ${ARGS}'
 
-all: production put
+all: compile test production

@@ -14,31 +14,30 @@ We have completed your MARS Authority Notification and Current Cataloging Servic
 Note: This month we’ve added a custom step that allows us to export any authorities that were added during the update process that have a date newer than the date in the record you sent us (example: the Mickey Mouse record you pointed out a couple weeks ago). The records that are exported are split by usage (name and subject), but each file contains the same records. When we add authorities, we add the usages that are set within those records, and in most cases those are both name and subject, so they will export into both files. If you have any questions, just let me know. You’ll start seeing these files every month now.
 
 [I have changed the order from the original email to show the correct ordering according to BSLW]
-notif:   CNEDM1602N.zip
-curcat:  CNEDM1602C.zip
-updates: CNEDM1602U.zip
 
 Notification (load first):
+DEL.MRC - 20 records
+NAME.CHG.mrc - 1,669 records
+NAME.NEW.mrc - 274 records
+SERIES.CHG.mrc - 26 records
+SUBJ.CHG.mrc - 1,357 records
+SUBJ.NEW.mrc - 9 records
+TITLE.CHG.mrc - 38 records
+TITLE.NEW.mrc - 2 records
 
-DEL.MRC - 46 records
-NAME.CHG.MRC - 1,690 records
-NAME.NEW.MRC - 244 records
-SERIES.CHG.MRC - 31 records
-SUBJ.CHG.MRC - 1,392 records
-SUBJ.NEW.MRC - 44 records
-TITLE.CHG.MRC - 44 records
-TITLE.NEW.MRC - 3 records
 
 Current Cataloging (load second):
+BIB.MRC - 5,173 records
+GENRE.NEW.mrc - 63 records
+NAME.NEW.mrc - 1,003 records
+SUBJ.NEW.mrc - 278 records
+TITLE.NEW.mrc - 21 records
 
-BIB.MRC - 7,060 records
-NAME.NEW.MRC - 2,031 records
-SUBJ.NEW.MRC - 250 records
-
-Updates (load last):
-
-NAME.NEW.MRC – 82 records
-SUBJ.NEW.MRC – 82 records
+Updates:
+LC.GENRE.mrc - 2 records
+NAME.NEW.mrc - 94 records
+SUBJ.NEW.mrc - 94 records
+TITLE.NEW.mrc - 1 records
 
 Project Notes
 =============
