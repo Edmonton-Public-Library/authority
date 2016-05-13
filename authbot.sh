@@ -277,12 +277,12 @@ then
 		rm *.MRC
 		echo "$NAME removing any BIB.MRC.* report files from last time" >> authbot.log
 		rm BIB.MRC.*
-		# Also prepmarc.sh creates and checks for '._marc_.txt' and if the marc files are 
-		# younger than the last time stamp it won't process them. Remove the old one here.
-		if [ -e "._marc_.txt" ]
-		then
-			rm ._marc_.txt
-		fi
+		## Also prepmarc.sh creates and checks for '._marc_.txt' and if the marc files are 
+		## younger than the last time stamp it won't process them. Remove the old one here.
+		# if [ -e "._marc_.txt" ]
+		# then
+			# rm ._marc_.txt
+		# fi
 		echo "$NAME Unzipping $file" >>authbot.log
 		# Clean (rm) zip file so we don't do this over and over.
 		if unzip $file *.MRC >>authbot.log

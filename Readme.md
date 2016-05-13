@@ -673,3 +673,48 @@ Line No.
 
 To fix this I have started to reverse engineer the way that ANSEL is corrupted on output.
 
+Prepmarc.sh issues
+------------------
+ ...
+@@PBK#xFICTION#zJUVENILE#  #aChildren's fiction - Series A#vPBK#wASIS#i312211160
+@@57998#lJPBKSER#mEPLZORDER#p4.53#tJPBK#xFICTION#zJUVENILE#  #aChildren's fictio
+@@n - Series A#vPBK#wASIS#i31221116058061#lJPBKSER#mEPLZORDER#p4.53#tJPBK#xFICTI
+@@ON#zJUVENILE##
+**
+  0 $(11603)
+  0 $(11604)
+  5173 $<bib_s> $(1402)
+  5 $<bib_s> $(1403)
+  0 $<bib_s> $(1404)
+  0 $<bib_s> $(1412)
+  0 $(11609)
+  5168 $(11607)
+Symphony $<catalog:u> $<marc:U> $<load:u> $<finished_on> $<friday:u>, $<may:u> 13, 2016, 11:27 AM
+*.MRC: No such file or directory
+[prepmarc.sh] cleaning out old files
+tmp.19826: No such file or directory
+*.MRC: No such file or directory
+caution: filename not matched:  *.MRC
+*.MRC: No such file or directory
+[prepmarc.sh] cleaning out old files
+tmp.19835: No such file or directory
+bash-3.2$ ls
+AllAuthKeysAndIDs.lst  authbot.sh             bibmatchpoint.sh       DEL.MRC.flat           log.txt                prepmarc.sh
+authbot.log            authority.pl           C.zip                  DEL.MRC.keys           Makefile
+bash-3.2$ ll
+total 27181
+drwx------   2 sirsi    sirsi         14 May 13 11:27 .
+-rw-------   1 sirsi    sirsi          0 May 13 11:27 ._marc_.txt
+drwx------   4 sirsi    sirsi          4 Mar  2  2015 ..
+-rw-------   1 sirsi    sirsi    13726112 May 13 11:22 AllAuthKeysAndIDs.lst
+-rw-------   1 sirsi    sirsi       1197 May 13 11:27 authbot.log
+-rwx------   1 sirsi    sirsi      13225 May 13 10:21 authbot.sh
+-rwx------   1 sirsi    sirsi      16650 May 13 10:21 authority.pl
+-rwx------   1 sirsi    sirsi       1895 May 13 10:21 bibmatchpoint.sh
+-rw-r--r--   1 sirsi    sirsi      79478 May 13 09:51 C.zip
+-rw-------   1 sirsi    sirsi      11440 May 13 11:22 DEL.MRC.flat
+-rw-------   1 sirsi    sirsi          0 May 13 11:22 DEL.MRC.keys
+-rw-------   1 sirsi    sirsi       1464 May 13 11:27 log.txt
+-rwx------   1 sirsi    sirsi        681 Jul 22  2015 Makefile
+-rwx------   1 sirsi    sirsi       6256 May 13 10:21 prepmarc.sh
+ ...

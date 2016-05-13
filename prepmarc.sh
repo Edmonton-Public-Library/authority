@@ -30,6 +30,7 @@
 # '''Note''': these instructions are not required for BIB.MRC because convMarc will convert bib marc files.
 # *************************** WARNING *********************************
 # Version:
+# 1.7 - Remove code that processes new files only. Parent script authbot.sh manages files.
 # 1.6 - Remove interactive mode because we only handle Unicode, we aren't worried about loading Unicode over ANSEL.
 # 1.5 - Important change to NOT use convMarc because it doesn't work on authority MARC files.
 #       Added prompt for each file to ensure user accepts responsibility for having authorities in correct format.
@@ -47,9 +48,9 @@ export LANG=en_US.UTF-8
 export SHELL=/bin/bash
 export NAME="[prepmarc.sh]"
 export BIN_CUSTOM=`getpathname bincustom`
-TOUCH_FILE=./._marc_.txt
-LAST_RUN=0
-LAST_RUN_DATE=""
+# TOUCH_FILE=./._marc_.txt
+# LAST_RUN=0
+# LAST_RUN_DATE=""
 
 # Test for the customer directory and cd there.
 if [ -e $HOME ]
@@ -63,15 +64,15 @@ fi
 # If we have run before we left a touch file here. The last modified 
 # time stamp is used to determine when we last ran, so we can look for
 # newer files.
-if [ -e $TOUCH_FILE ]
-then
-	# LAST_RUN=`stat -c %Y $TOUCH_FILE`
-	perl -e 'print ((stat("._marc_.txt"))[9]);' > tmp.$$
-	LAST_RUN=`cat tmp.$$`
-	# LAST_RUN_DATE=`stat -c %y $TOUCH_FILE`
-else
-	echo "$NAME no $TOUCH_FILE found, will process all MARC files in directory." >>log.txt
-fi
+# if [ -e $TOUCH_FILE ]
+# then
+	## LAST_RUN=`stat -c %Y $TOUCH_FILE`
+	# perl -e 'print ((stat("._marc_.txt"))[9]);' > tmp.$$
+	# LAST_RUN=`cat tmp.$$`
+	## LAST_RUN_DATE=`stat -c %y $TOUCH_FILE`
+# else
+	# echo "$NAME no $TOUCH_FILE found, will process all MARC files in directory." >>log.txt
+# fi
 
 # Here we will get a list of all the new MARC files and process them.
 # If you want to re-process any MARC file like foo.MRC, just type the following:
@@ -81,7 +82,7 @@ marcFileCount=0
 
 declare -a marcFiles=(`ls *.MRC`)
 
-echo "$NAME cleaning out old files"
+echo "$NAME cleaning out old 'fix.flat' files"
 # ...clean out the fix.flat file, it's a temp file any way.
 if [ -s fix.flat ]; then
 	rm fix.flat
@@ -90,11 +91,11 @@ fi
 ## now loop through the above array
 for file in "${marcFiles[@]}"
 do
-	perl -e 'print ((stat("'$file'"))[9]);' > tmp.$$
-	myFileTime=`cat tmp.$$`
+	# perl -e 'print ((stat("'$file'"))[9]);' > tmp.$$
+	# myFileTime=`cat tmp.$$`
 	# echo "comparing $LAST_RUN -lt $myFileTime"
-	if (( "$LAST_RUN" < "$myFileTime" ))
-	then
+	# if (( "$LAST_RUN" < "$myFileTime" ))
+	# then
 		marcFileCount=$[$marcFileCount +1]
 		# Let's just make sure the person running this has read the warning above.
 		# echo -n "*** WARNING: Are you sure $file is MARC-8 so we don't break our diacritics? y[n]: "
@@ -124,9 +125,10 @@ do
 			# Which you don't get with *C.zip
 			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
 		fi
-	fi
+	# fi
 done
-rm tmp.$$
-# Touch the file so the next time it runs we can compare which files were added after we run now.
-touch $TOUCH_FILE
-echo "$NAME $marcFileCount fresh files done." >>log.txt
+# rm tmp.$$
+## Touch the file so the next time it runs we can compare which files were added after we run now.
+# touch $TOUCH_FILE
+# echo "$NAME $marcFileCount fresh files done." >>log.txt
+echo "$NAME $marcFileCount files done." >>log.txt
