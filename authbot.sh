@@ -77,16 +77,21 @@ echo "$NAME ===" >> authbot.log
 function do_update {
 	# First part: update your bibs. This is done because BSLW adds RDA tags 
 	# into the bibs for us as part of their contract requirements.
+	echo "==> testing for $BIB_MARC_FILE"
 	if [ -s $BIB_MARC_FILE ]
 	then
 		# Do some reporting on the file we got.
 		if [ -s bibmatchpoint.sh ]
 		then
 			# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
+			echo "==> running bibmatchpoint.sh $BIB_MARC_FILE ..."
 			bibmatchpoint.sh $BIB_MARC_FILE 2>&1 >>authbot.log
 			echo "$NAME finished running bibmatchpoint.sh." >>authbot.log
+			echo "==> done."
 		else
+			echo "==> bibmatchpoint.sh not found!"
 			echo "$NAME ** Warning: bibmatchpoint.sh not present in this directory." >>authbot.log
+			exit 1
 		fi
 		# -im (default) MARC records will be read from standard input.
 		# -a (required) specifies the format of the record.
@@ -95,9 +100,11 @@ function do_update {
 		# -m indicates catalog creation/update/review mode; 'u' update if matched, never create.
 		# -f is followed by a list of options specifying how to use the flexible key; 'S' use the Sirsi number (035).
 		# -e specifies the filename for saving MARC records with errors.
+		echo "==> running catalogload..."
 		echo "$NAME running catalogload." >>authbot.log
 		# cat $BIB_MARC_FILE | convMarc -ta | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
 		cat $BIB_MARC_FILE | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
+		echo "==> done."
 		echo "$NAME done catalogload." >>authbot.log
 		# Now copy all the affected catalog keys to ${workdir}/Batchkeys/adutext.keys in lieu of touchkeys on each.
 		# Adutext will throttle the load based on values specified in the report as outlined below.
@@ -107,6 +114,7 @@ function do_update {
 		# from the file.  Eventually the file will be empty and removed.
 		# batchckeyfile=${workdir}/Batchkeys/adutext.keys
 		# threshold=20000"
+		echo "==> managing cat keys from BIB.MRC.catkeys.lst ..."
 		if [ -s BIB.MRC.catkeys.lst ]
 		then
 			# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
@@ -126,34 +134,48 @@ function do_update {
 					fi
 				fi
 			fi
+			echo "==> done."
 		else
+			echo "$** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty."
 			echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>authbot.log
 		fi
 		# next make sure premarc.sh doesn't process this puppy because that will add time to processing.
-		rm $BIB_MARC_FILE
+		echo "==> moving the $BIB_MARC_FILE $BIB_MARC_FILE .done"
+		mv $BIB_MARC_FILE $BIB_MARC_FILE".done"
 	fi
 
 	# Pre-process all the other MARC files.
+	echo "==> processing MRC files with prepmarc.sh"
 	if [ ! -s ./prepmarc.sh ]
 	then
+		echo "==> ** script needs $HOME/premarc.sh to run!" 
 		echo "$NAME ** script needs $HOME/premarc.sh to run!" >>authbot.log
 		exit 1
 	else
+		echo "==>  running prepmarc.sh ..." 
 		echo "$NAME running prepmarc.sh" >>authbot.log
 		./prepmarc.sh
 		# prepmarc.sh knows how to process delete marc files.
 		# The bi-product of that process is called: 'DEL.MRC.keys'
-		if [ -s $DELETE_KEYS_FILE ]
+		if [ -e $DELETE_KEYS_FILE ]
 		then
-			echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>authbot.log
-			cat $DELETE_KEYS_FILE | remauthority -u
+			if [ -s $DELETE_KEYS_FILE ]
+			then
+				echo "==>  $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..."
+				echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>authbot.log
+				cat $DELETE_KEYS_FILE | remauthority -u
+			fi
+			# There is a list of authority keys to remove but it's empty, get rid of it so we don't do this again if re-run.
+			echo "==>  authorities deleted."
 			echo "$NAME authorities deleted." >>authbot.log
-			# Now remove the file so we don't do this again if re-run.
 			rm $DELETE_KEYS_FILE
-		fi
+		fi 
+		# Nothing to do since no authority keys to delete.
+		echo "==>  done processing with premarc.sh"
 	fi
 
-	# We should now have a fix.flat file here.
+	# We should now have a fix.flat file here from the process block before this.
+	echo "==>  testing for fix.flat..."
 	if [ -s fix.flat ]
 	then
 		# Authload doesn't do any touchkeys so we have to put all of the effected keys into 
@@ -164,7 +186,10 @@ function do_update {
 		# directly with the following line.
 		# *** Warning ***
 		# -fc: use 001 as match, -mb: update if possible, otherwise create, -q: set authorized date.
+		echo "==>  starting authload 'cat fix.flat | authload -fc -mb -q"$TODAY" -efix.flat.err'"
 		cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
+		echo "==>  done."
+		echo "==>  testing and managing authedit.keys..."
 		if [ -s authedit.keys ]
 		then
 			# We have found that if you randomize your keys you can distribute SUBJ changes over a number of nights
@@ -192,8 +217,13 @@ function do_update {
 				echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'." >>authbot.log
 				exit 1
 			fi
+		else
+			echo "==>  ** no authedit.keys file found."
 		fi
+		echo "==> done."
 	fi
+	echo "==>  returning to caller of do_update()."
+	return;
 } # End of do do_update()
 
 # This file is all the authority keys and IDs on our system output in pipe-delimited 
@@ -245,7 +275,7 @@ then
 	mv $new_zip A.zip
 else
 	echo "**error Failed to find new authorities. Should be named '$new_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
-	echo "**error Failed to find new authorities. Should be named '$new_zip'. Load order of files from BSLW is important. exiting."
+	echo "== **error Failed to find new authorities. Should be named '$new_zip'. Load order of files from BSLW is important. exiting."
 	exit 1
 fi
 # Now the changes
@@ -255,7 +285,7 @@ then
 	mv $change_zip B.zip
 else
 	echo "**error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
-	echo "**error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting."
+	echo "== **error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting."
 	exit 1
 fi
 if [ -f "$update_zip" ]
@@ -264,7 +294,7 @@ then
 	mv $update_zip C.zip
 else
 	echo "No update zip file found, moving right along." >>authbot.log
-	echo "No update zip file found, moving right along.."
+	echo "== No update zip file found, moving right along.."
 fi
 
 # Here we will look for any zip file and unpack it.
@@ -273,24 +303,53 @@ then
 	declare -a zipFiles=(`ls *.zip`)
 	for file in "${zipFiles[@]}"
 	do
-		echo "$NAME removing any MRC files from last time" >> authbot.log
-		rm *.MRC
-		echo "$NAME removing any BIB.MRC.* report files from last time" >> authbot.log
-		rm BIB.MRC.*
-		## Also prepmarc.sh creates and checks for '._marc_.txt' and if the marc files are 
-		## younger than the last time stamp it won't process them. Remove the old one here.
-		# if [ -e "._marc_.txt" ]
-		# then
-			# rm ._marc_.txt
-		# fi
+		echo "== processing $file."
+		if ls *.MRC
+		echo "== testing if any *.MRC files."
+		then
+			echo "== yes, removing."
+			echo "$NAME removing any MRC files from last time" >> authbot.log
+			rm *.MRC
+		else
+			echo "== no."
+		fi
+		echo "== testing if any BIB.MRC.* files."
+		if ls BIB.MRC.*
+		then
+			echo "== yes, removing."
+			echo "$NAME removing any BIB.MRC.* report files from last time" >> authbot.log
+			rm BIB.MRC.*
+		else
+			echo "== no."
+		fi
+		# Also prepmarc.sh creates and checks for '._marc_.txt' and if the marc files are 
+		# younger than the last time stamp it won't process them. Remove the old one here.
+		echo "== testing if any ._marc_.txt file which will make prepmarc.sh only process the newest MARC files."
+		if [ -e "._marc_.txt" ]
+		then
+			echo "== yes, removing."
+			rm ._marc_.txt
+		else
+			echo "== no."
+		fi
+		echo "== Unzipping $file ..."
 		echo "$NAME Unzipping $file" >>authbot.log
 		# Clean (rm) zip file so we don't do this over and over.
-		if unzip $file *.MRC >>authbot.log
+		unzip $file *.MRC >>authbot.log
+		## It is also possible they have packaged MRC files as 'mrc' files.
+		if unzip $file *.mrc >>authbot.log
 		then
-			echo "$NAME removing $file" >>authbot.log
-			rm $file
+			# Rename the files so they will run with a standard extension of .MRC
+			for file in *.mrc
+			do
+				mv "$file" "${file%.mrc}.MRC"
+			done
 		fi
+		echo "$NAME removing $file" >>authbot.log
+		echo "== ... successful. moving file so it doesn't get re-run."
+		mv $file $file".done"
 		# Call the function that will do all the processing on DEL.MRC Bibs and authorities.
+		echo "== calling update()"
 		do_update 
 	done
 else # No zip files but could be MRCs here dropped by admin.
