@@ -56,7 +56,7 @@ if [ -e $HOME ]
 then
 	cd $HOME
 else
-	echo "$NAME **error: invalid configuration. '$HOME' doesn't exist." >>log.txt
+	echo "$NAME **error: invalid configuration. '$HOME' doesn't exist." >>authbot.log
 	exit 1
 fi
 
@@ -70,7 +70,7 @@ then
 	LAST_RUN=`cat tmp.$$`
 	# LAST_RUN_DATE=`stat -c %y $TOUCH_FILE`
 else
-	echo "$NAME no $TOUCH_FILE found, will process all MARC files in directory." >>log.txt
+	echo "$NAME no $TOUCH_FILE found, will process all MARC files in directory." >>authbot.log
 fi
 
 # Here we will get a list of all the new MARC files and process them.
@@ -104,7 +104,7 @@ do
 			# echo "... it's ok to be cautious, exiting."
 			# exit 1
 		# fi
-		echo "$NAME Found a fresh MARC file: '$file'. Processing: # $marcFileCount..."
+		echo "$NAME Found a fresh MARC file: '$file'. Processing: # $marcFileCount..." >>authbot.log
 		# The next process should remain as is because convMarc doesn't handle authority marc files.
 		# == Processing instructions until we move to native UTF-8 ==
 		# Export the mrc files from the zip archive. Since both archives contain TITLE.NEW.MRC etc, it behoves you to extract into separate folders.
@@ -115,18 +115,20 @@ do
 		## In the MarcEdit editor select File>Compile File into MARC, selecting save as MARC-8 MARC File (*.mrc) as the Save as type.
 		# You can confirm that the file has been processed correctly if you double-click the MARC-8 version of a file and search for accented characters. You should not see {ecute} or similar annotations.
 		# '''Note''': these instructions are not required for BIB.MRC because convMarc will convert bib marc files.
-		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>log.txt >$file.flat
+		echo "$NAME starting flatskip of $file..." >>authbot.log
+		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>authbot.log >$file.flat
+		echo "$NAME done." >>authbot.log
 		if [ $file = 'DEL.MRC' ]
 		then
 			# Of which there is 1 in every shipment, but only found in the *N.zip file.
-			cat $file.flat | ./authority.pl -d > $file.keys 2>>log.txt
+			cat $file.flat | ./authority.pl -d > $file.keys 2>>authbot.log
 		else
 			# Which you don't get with *C.zip
-			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
+			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>authbot.log
 		fi
 	fi
 done
 rm tmp.$$
 # Touch the file so the next time it runs we can compare which files were added after we run now.
 touch $TOUCH_FILE
-echo "$NAME $marcFileCount fresh files done." >>log.txt
+echo "$NAME $marcFileCount fresh files done." >>authbot.log
