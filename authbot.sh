@@ -72,9 +72,12 @@ INIT_MSG=`date`' start ==='
 echo $INIT_MSG > authbot.log
 echo "$NAME ===" >> authbot.log
 
-
-
-
+# Check for dependancy ./authority.pl
+if [ ! -e "$HOME/authority.pl" ]
+then
+	echo "** error: required file $HOME/authority.pl not found."
+	exit 1
+fi
 
 # Function to manage each the bib load, delete and adds and changes to authorities.
 function do_update {
@@ -87,7 +90,7 @@ function do_update {
 		echo "==> checking bib match points on $BIB_MARC_FILE ..."
 		cat $BIB_MARC_FILE | flatskip -im -a'MARC' -of | nowrap.pl > $BIB_MARC_FILE.flat
 		# Get all the matchpoint TCNs for comparison with our catalog.
-		grep "^\.035\.   |a(Sirsi)" $BIB_MARC_FILE.flat | pipe.pl -W'\s+' -oc2 -dc2 > $BIB_MARC_FILE.CatalogTag035s.lst
+		grep "^\.035\.   |a(Sirsi)" $BIB_MARC_FILE.flat | $BIN_CUSTOM/pipe.pl -W'\s+' -oc2 -dc2 > $BIB_MARC_FILE.CatalogTag035s.lst
 		# next we get the number of these found in our catalog BOTH visible and shadowed, and report.
 		cat $BIB_MARC_FILE.CatalogTag035s.lst | seltext -lBOTH 2>&1 $BIB_MARC_FILE.analyse
 		# Make a record of the file name and tags found in the on-going log file.
@@ -144,39 +147,61 @@ function do_update {
 			echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>authbot.log
 		fi
 		# next make sure premarc.sh doesn't process this puppy because that will add time to processing.
-		echo "==> moving the $BIB_MARC_FILE $BIB_MARC_FILE .done"
-		mv $BIB_MARC_FILE $BIB_MARC_FILE".done"
+		echo "==> moving the $BIB_MARC_FILE $BIB_MARC_FILE.done"
+		mv $BIB_MARC_FILE $BIB_MARC_FILE.done
 	fi
 
 	# Pre-process all the other MARC files.
-	echo "==> processing MRC files with prepmarc.sh"
-	if [ ! -s ./prepmarc.sh ]
-	then
-		echo "==> ** script needs $HOME/premarc.sh to run!" 
-		echo "$NAME ** script needs $HOME/premarc.sh to run!" >>authbot.log
-		exit 1
-	else
-		echo "==>  running prepmarc.sh ..." 
-		echo "$NAME running prepmarc.sh" >>authbot.log
-		./prepmarc.sh
-		# prepmarc.sh knows how to process delete marc files.
-		# The bi-product of that process is called: 'DEL.MRC.keys'
-		if [ -e $DELETE_KEYS_FILE ]
-		then
-			if [ -s $DELETE_KEYS_FILE ]
-			then
-				echo "==>  $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..."
-				echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>authbot.log
-				cat $DELETE_KEYS_FILE | remauthority -u
-			fi
-			# There is a list of authority keys to remove but it's empty, get rid of it so we don't do this again if re-run.
-			echo "==>  authorities deleted."
-			echo "$NAME authorities deleted." >>authbot.log
-			rm $DELETE_KEYS_FILE
-		fi 
-		# Nothing to do since no authority keys to delete.
-		echo "==>  done processing with premarc.sh"
+	echo "==> processing authority MRC files..."
+	echo "$NAME running prepmarc.sh" >>authbot.log
+	marcFileCount=0
+	declare -a marcFiles=(`ls *.MRC`)
+	# ...clean out the fix.flat file, it's a temp file any way.
+	if [ -s fix.flat ]; then
+		rm fix.flat
 	fi
+	## now loop through the above array
+	for file in "${marcFiles[@]}"
+	do
+		marcFileCount=$[$marcFileCount +1]
+		echo "$NAME Found MARC file: '$file'. Processing: # $marcFileCount starting flatskip..." >>authbot.log
+		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>authbot.log >$file.flat
+		marc_records=`egrep DOCUMENT $file.flat | wc -l`
+		echo "$file contains $marc_records " >> log.txt
+		echo "$NAME done flatskip." >>authbot.log
+		if [ $file = 'DEL.MRC' ]
+		then
+			# Of which there is 1 in every shipment, but only found in the *N.zip file.
+			echo "$NAME processing deleted authoriites..." >>authbot.log
+			# Save the report results for catalogers.
+			cat $file.flat | ./authority.pl -d > $DELETE_KEYS_FILE 2>>log.txt
+			echo "$NAME done." >>authbot.log
+		else
+			# Which you don't get with *C.zip
+			echo "$NAME processing authoriites..." >>authbot.log
+			# Save the report results for catalogers.
+			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
+			echo "$NAME done." >>authbot.log
+		fi
+		mv $file $file.done
+	done
+	# process delete marc files.
+	# The bi-product of that process is called: 'DEL.MRC.keys'
+	if [ -e $DELETE_KEYS_FILE ]
+	then
+		if [ -s $DELETE_KEYS_FILE ]
+		then
+			echo "==>  $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..."
+			echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>authbot.log
+			cat $DELETE_KEYS_FILE | remauthority -u
+		fi
+		# There is a list of authority keys to remove but it's empty, get rid of it so we don't do this again if re-run.
+		echo "==>  authorities deleted."
+		echo "$NAME authorities deleted." >>authbot.log
+		rm $DELETE_KEYS_FILE
+	fi 
+	# Nothing to do since no authority keys to delete.
+	echo "==>  done processing with premarc.sh"
 
 	# We should now have a fix.flat file here from the process block before this.
 	echo "==>  testing for fix.flat..."
