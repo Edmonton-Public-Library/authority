@@ -121,10 +121,16 @@ do
 		if [ $file = 'DEL.MRC' ]
 		then
 			# Of which there is 1 in every shipment, but only found in the *N.zip file.
-			cat $file.flat | ./authority.pl -d > $file.keys 2>>authbot.log
+			echo "$NAME processing deleted authoriites..." >>authbot.log
+			# Save the report results for catalogers.
+			cat $file.flat | ./authority.pl -d > $file.keys 2>>log.txt
+			echo "$NAME done." >>authbot.log
 		else
 			# Which you don't get with *C.zip
-			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>authbot.log
+			echo "$NAME processing authoriites..." >>authbot.log
+			# Save the report results for catalogers.
+			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
+			echo "$NAME done." >>authbot.log
 		fi
 	fi
 done
