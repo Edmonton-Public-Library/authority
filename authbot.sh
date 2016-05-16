@@ -51,6 +51,7 @@
 ############################################################################################
 export HOME=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
 export WORK_DIR=`getpathname workdir`
+export BIN_CUSTOM=`getpathname bincustom`
 export BATCH_KEY_DIR=${WORK_DIR}/Batchkeys
 export LANG=en_US.UTF-8
 export SHELL=/bin/bash
@@ -175,13 +176,13 @@ function do_update {
 			# Of which there is 1 in every shipment, but only found in the *N.zip file.
 			echo "$NAME processing deleted authoriites..." >>authbot.log
 			# Save the report results for catalogers.
-			cat $file.flat | ./authority.pl -d > $DELETE_KEYS_FILE 2>>log.txt
+			cat $file.flat | $HOME/authority.pl -d > $DELETE_KEYS_FILE 2>>log.txt
 			echo "$NAME done." >>authbot.log
 		else
 			# Which you don't get with *C.zip
 			echo "$NAME processing authoriites..." >>authbot.log
 			# Save the report results for catalogers.
-			cat $file.flat | ./authority.pl -v"all" -o >>fix.flat 2>>log.txt
+			cat $file.flat | $HOME/authority.pl -v"all" -o >>fix.flat 2>>log.txt
 			echo "$NAME done." >>authbot.log
 		fi
 		mv $file $file.done
@@ -334,8 +335,8 @@ then
 	for zip_file in "${zipFiles[@]}"
 	do
 		echo "== processing $zip_file."
-		if ls *.MRC
 		echo "== testing if any *.MRC files."
+		if ls *.MRC
 		then
 			echo "== yes, removing."
 			echo "$NAME removing any MRC files from last time" >> authbot.log
@@ -352,22 +353,12 @@ then
 		else
 			echo "== no."
 		fi
-		# Also prepmarc.sh creates and checks for '._marc_.txt' and if the marc files are 
-		# younger than the last time stamp it won't process them. Remove the old one here.
-		echo "== testing if any ._marc_.txt file which will make prepmarc.sh only process the newest MARC files."
-		if [ -e "._marc_.txt" ]
-		then
-			echo "== yes, removing."
-			rm ._marc_.txt
-		else
-			echo "== no."
-		fi
 		echo "== Unzipping $zip_file ..."
 		echo "$NAME Unzipping $zip_file" >>authbot.log
 		# Clean (rm) zip file so we don't do this over and over.
 		unzip $zip_file *.MRC >>authbot.log
 		## It is also possible they have packaged MRC files as 'mrc' files.
-		if unzip $zip_file *.mrc >>authbot.log
+		if unzip $zip_file *.mrc >>authbot.log 
 		then
 			# Rename the files so they will run with a standard extension of .MRC
 			for marc_file in *.mrc
@@ -378,6 +369,7 @@ then
 		# Call the function that will do all the processing Bibs and authorities.
 		echo "== calling update()"
 		do_update 
+		echo "== returned from update()"
 	done
 else # No zip files but could be MRCs here dropped by admin.
 	do_update
