@@ -2,8 +2,6 @@
 ####################################################
 #
 # Perl source file for project authority 
-# Purpose:
-# Method:
 #
 # Compares a update authority file against existing authorities.
 #    Copyright (C) 2014  Andrew Nisbet
@@ -26,6 +24,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Dec 22 10:07:38 MST 2014
 # Rev: 
+#          0.9.11_a - Removed example in usage note that refers to defunct -p.
 #          0.9.11 - Added a trailing pipe to the authority keys output by -d.
 #          0.9.1 - Add -d flag for outputting authority keys for authorities recommended
 #                  for deletion, that is, given a list of authority IDs from vendor, output
@@ -60,7 +59,7 @@ $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/us
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $PRE_LOAD   = {}; # The authority file to report on. 
-my $VERSION    = qq{0.9.11};
+my $VERSION    = qq{0.9.11_a};
 
 my $stats = {};
 
@@ -117,7 +116,6 @@ output; unrecognized records are output unaltered.
  -x      : This (help) message.
 
 examples : 
- cat update.flat | $0 -p"current.flat"
  cat update.flat | $0 -o \> fixed_authorities.flat
 To create a flat file with best match for loading authority UPDATES (normalized 001) use:
  cat new_changed_authorities.flat | $0 -v"all" -o \> fixed_authorities.flat
