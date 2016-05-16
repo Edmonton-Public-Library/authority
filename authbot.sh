@@ -32,6 +32,9 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           4.0 - Proper, meaningful reporting for staff consumption. 
+#           3.3 - Much more reporting of each stage, minor changes to some file tests, fixed 
+#                 bug that failed to load MARC files with lower case extensions. 
 #           3.2 - Reintroduce updates as an optional process. 
 #           3.1 - Return to previous zip submission loading but maintain control of load order. 
 #           3.0 - Order of loading zip files matters now; added control to enforce order. 
@@ -80,19 +83,20 @@ function do_update {
 	echo "==> testing for $BIB_MARC_FILE"
 	if [ -s $BIB_MARC_FILE ]
 	then
-		# Do some reporting on the file we got.
-		if [ -s bibmatchpoint.sh ]
-		then
-			# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
-			echo "==> running bibmatchpoint.sh $BIB_MARC_FILE ..."
-			bibmatchpoint.sh $BIB_MARC_FILE 2>&1 >>authbot.log
-			echo "$NAME finished running bibmatchpoint.sh." >>authbot.log
-			echo "==> done."
-		else
-			echo "==> bibmatchpoint.sh not found!"
-			echo "$NAME ** Warning: bibmatchpoint.sh not present in this directory." >>authbot.log
-			exit 1
-		fi
+		# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
+		echo "==> checking bib match points on $BIB_MARC_FILE ..."
+		cat $BIB_MARC_FILE | flatskip -im -a'MARC' -of | nowrap.pl > $BIB_MARC_FILE.flat
+		# Get all the matchpoint TCNs for comparison with our catalog.
+		grep "^\.035\.   |a(Sirsi)" $BIB_MARC_FILE.flat | pipe.pl -W'\s+' -oc2 -dc2 > $BIB_MARC_FILE.CatalogTag035s.lst
+		# next we get the number of these found in our catalog BOTH visible and shadowed, and report.
+		cat $BIB_MARC_FILE.CatalogTag035s.lst | seltext -lBOTH 2>&1 $BIB_MARC_FILE.analyse
+		# Make a record of the file name and tags found in the on-going log file.
+		echo "$BIB_MARC_FILE" >>log.txt
+		cat $BIB_MARC_FILE | marcanalyze >>log.txt 2>$BIB_MARC_FILE.err
+		cat "====== 035 matchpoint report =====" >>log.txt
+		cat $BIB_MARC_FILE.analyse >>log.txt
+		echo "$NAME finished checking match point report." >>authbot.log
+		echo "==> done."
 		# -im (default) MARC records will be read from standard input.
 		# -a (required) specifies the format of the record.
 		# -b is followed by one option to indicate how bib records will be matched; 'f'(default) matches on the flexible key.
@@ -345,9 +349,7 @@ then
 				mv "$file" "${file%.mrc}.MRC"
 			done
 		fi
-		echo "$NAME removing $file" >>authbot.log
-		echo "== ... successful. moving file so it doesn't get re-run."
-		mv $file $file".done"
+		# echo "$NAME removing $file" >>authbot.log
 		# Call the function that will do all the processing on DEL.MRC Bibs and authorities.
 		echo "== calling update()"
 		do_update 
