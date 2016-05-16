@@ -32,7 +32,8 @@
 #          than the maximum expected authorities.
 #
 # Revision:
-#           4.0 - Proper, meaningful reporting for staff consumption. 
+#           4.0 - Proper, meaningful reporting for staff consumption. Refactored to get rid of premarc.sh and 
+#                 bibmarchpoint.sh. 
 #           3.3 - Much more reporting of each stage, minor changes to some file tests, fixed 
 #                 bug that failed to load MARC files with lower case extensions. 
 #           3.2 - Reintroduce updates as an optional process. 
@@ -330,9 +331,9 @@ fi
 if ls *.zip >/dev/null
 then
 	declare -a zipFiles=(`ls *.zip`)
-	for file in "${zipFiles[@]}"
+	for zip_file in "${zipFiles[@]}"
 	do
-		echo "== processing $file."
+		echo "== processing $zip_file."
 		if ls *.MRC
 		echo "== testing if any *.MRC files."
 		then
@@ -361,21 +362,20 @@ then
 		else
 			echo "== no."
 		fi
-		echo "== Unzipping $file ..."
-		echo "$NAME Unzipping $file" >>authbot.log
+		echo "== Unzipping $zip_file ..."
+		echo "$NAME Unzipping $zip_file" >>authbot.log
 		# Clean (rm) zip file so we don't do this over and over.
-		unzip $file *.MRC >>authbot.log
+		unzip $zip_file *.MRC >>authbot.log
 		## It is also possible they have packaged MRC files as 'mrc' files.
-		if unzip $file *.mrc >>authbot.log
+		if unzip $zip_file *.mrc >>authbot.log
 		then
 			# Rename the files so they will run with a standard extension of .MRC
-			for file in *.mrc
+			for marc_file in *.mrc
 			do
-				mv "$file" "${file%.mrc}.MRC"
+				mv "$marc_file" "${marc_file%.mrc}.MRC"
 			done
 		fi
-		# echo "$NAME removing $file" >>authbot.log
-		# Call the function that will do all the processing on DEL.MRC Bibs and authorities.
+		# Call the function that will do all the processing Bibs and authorities.
 		echo "== calling update()"
 		do_update 
 	done
