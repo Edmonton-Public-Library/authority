@@ -382,6 +382,9 @@ then
 else # No zip files but could be MRCs here dropped by admin.
 	do_update
 fi
-
+# Move everything back so we can rerun if needed, and reduce confusion.
+mv A.zip $new_zip
+mv B.zip $change_zip
+mv C.zip $update_zip
 echo "$NAME end ===." >>authbot.log
 #EOF
