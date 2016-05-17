@@ -61,7 +61,8 @@ MAX_KEYS=1000000
 DELETE_KEYS_FILE=DEL.MRC.keys
 # BSLW always sends us the bibs MARC named 'BIB.MRC'
 BIB_MARC_FILE=BIB.MRC
-
+LOG=log.txt
+AUTH_LOG=authbot.log
 
 # Lets go to the directory where all this is going to be done.
 cd $HOME
@@ -71,8 +72,8 @@ then
 	MAX_KEYS=$1
 fi
 INIT_MSG=`date`' start ==='
-echo $INIT_MSG > authbot.log
-echo "$NAME ===" >> authbot.log
+echo $INIT_MSG > $AUTH_LOG
+echo "$NAME ===" >> $AUTH_LOG
 
 # Check for dependancy ./authority.pl
 if [ ! -e "$HOME/authority.pl" ]
@@ -94,13 +95,14 @@ function do_update {
 		# Get all the matchpoint TCNs for comparison with our catalog.
 		grep "^\.035\.   |a(Sirsi)" $BIB_MARC_FILE.flat | $BIN_CUSTOM/pipe.pl -W'\s+' -oc2 -dc2 > $BIB_MARC_FILE.CatalogTag035s.lst
 		# next we get the number of these found in our catalog BOTH visible and shadowed, and report.
-		cat $BIB_MARC_FILE.CatalogTag035s.lst | seltext -lBOTH 2>&1 $BIB_MARC_FILE.analyse
+		cat $BIB_MARC_FILE.CatalogTag035s.lst | seltext -lBOTH -oA  2>$BIB_MARC_FILE.analyse
 		# Make a record of the file name and tags found in the on-going log file.
-		echo "$BIB_MARC_FILE" >>log.txt
-		cat $BIB_MARC_FILE | marcanalyze >>log.txt 2>$BIB_MARC_FILE.err
-		cat "====== 035 matchpoint report =====" >>log.txt
-		cat $BIB_MARC_FILE.analyse >>log.txt
-		echo "$NAME finished checking match point report." >>authbot.log
+		echo "$BIB_MARC_FILE" >>$LOG
+		cat $BIB_MARC_FILE | marcanalyze >>$LOG 2>$BIB_MARC_FILE.err
+		cat "====== 035 matchpoint report =====" >>$LOG
+		cat $BIB_MARC_FILE.analyse >>$LOG
+		echo "$NAME finished checking match point report." >>$AUTH_LOG
+		mv 
 		echo "==> done."
 		# -im (default) MARC records will be read from standard input.
 		# -a (required) specifies the format of the record.
@@ -110,15 +112,14 @@ function do_update {
 		# -f is followed by a list of options specifying how to use the flexible key; 'S' use the Sirsi number (035).
 		# -e specifies the filename for saving MARC records with errors.
 		echo "==> running catalogload..."
-		echo "$NAME running catalogload." >>authbot.log
-		# cat $BIB_MARC_FILE | convMarc -ta | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
-		cat $BIB_MARC_FILE | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
+		echo "$NAME running catalogload." >>$AUTH_LOG
+		cat $BIB_MARC_FILE | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst 2>>$LOG
 		echo "==> done."
 		# Move the error report from authload into the log for the final error report.
-		echo "=== Contents of BIB.MRC.err: " >> log.txt
-		cat BIB.MRC.err >> log.txt
-		echo "=== End contents of BIB.MRC.err: " >> log.txt
-		echo "$NAME done catalogload." >>authbot.log
+		echo "=== Contents of BIB.MRC.err: " >> $LOG
+		cat BIB.MRC.err >> $LOG
+		echo "=== End contents of BIB.MRC.err: " >> $LOG
+		echo "$NAME done catalogload." >>$AUTH_LOG
 		# Now copy all the affected catalog keys to ${workdir}/Batchkeys/adutext.keys in lieu of touchkeys on each.
 		# Adutext will throttle the load based on values specified in the report as outlined below.
 		# "In order to process a large amount of catalog keys, this file can be created 
@@ -131,7 +132,7 @@ function do_update {
 		if [ -s BIB.MRC.catkeys.lst ]
 		then
 			# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
-			echo "$NAME appending keys to ${BATCH_KEY_DIR}/adutext.keys" >>authbot.log
+			echo "$NAME appending keys to ${BATCH_KEY_DIR}/adutext.keys" >>$AUTH_LOG
 			cat BIB.MRC.catkeys.lst >>${BATCH_KEY_DIR}/adutext.keys
 			# Since we don't want the same key to be processed multiple times because this function 
 			# can be run  multiple times for two bib.MRC files; one for changes from LC and one for changes
@@ -150,7 +151,7 @@ function do_update {
 			echo "==> done."
 		else
 			echo "$** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty."
-			echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>authbot.log
+			echo "$NAME ** Warning: BIB.MRC.catkeys.lst failed to copy to '${BATCH_KEY_DIR}/adutext.keys' because it was empty." >>$AUTH_LOG
 		fi
 		# next make sure premarc.sh doesn't process this puppy because that will add time to processing.
 		echo "==> moving the $BIB_MARC_FILE $BIB_MARC_FILE.done"
@@ -159,7 +160,7 @@ function do_update {
 
 	# Pre-process all the other MARC files.
 	echo "==> processing authority MRC files..."
-	echo "$NAME running prepmarc.sh" >>authbot.log
+	echo "$NAME running prepmarc.sh" >>$AUTH_LOG
 	marcFileCount=0
 	declare -a marcFiles=(`ls *.MRC`)
 	# ...clean out the fix.flat file, it's a temp file any way.
@@ -170,24 +171,24 @@ function do_update {
 	for file in "${marcFiles[@]}"
 	do
 		marcFileCount=$[$marcFileCount +1]
-		echo "$NAME Found MARC file: '$file'. Processing: # $marcFileCount starting flatskip..." >>authbot.log
-		cat $file | flatskip -im -aMARC -of | $BIN_CUSTOM/nowrap.pl 2>>authbot.log >$file.flat
+		echo "$NAME Found MARC file: '$file'. Processing: # $marcFileCount starting flatskip..." >>$AUTH_LOG
+		cat $file | flatskip -im -aMARC -of 2>>$AUTH_LOG | $BIN_CUSTOM/nowrap.pl 2>>$AUTH_LOG >$file.flat
 		marc_records=`egrep DOCUMENT $file.flat | wc -l`
-		echo "$file contains $marc_records " >> log.txt
-		echo "$NAME done flatskip." >>authbot.log
+		echo "$file contains $marc_records " >> $LOG
+		echo "$NAME done flatskip." >>$AUTH_LOG
 		if [ $file = 'DEL.MRC' ]
 		then
 			# Of which there is 1 in every shipment, but only found in the *N.zip file.
-			echo "$NAME processing deleted authoriites..." >>authbot.log
+			echo "$NAME processing deleted authoriites..." >>$AUTH_LOG
 			# Save the report results for catalogers.
-			cat $file.flat | $HOME/authority.pl -d > $DELETE_KEYS_FILE 2>>log.txt
-			echo "$NAME done." >>authbot.log
+			cat $file.flat | $HOME/authority.pl -d > $DELETE_KEYS_FILE 2>>$LOG
+			echo "$NAME done." >>$AUTH_LOG
 		else
 			# Which you don't get with *C.zip
-			echo "$NAME processing authoriites..." >>authbot.log
+			echo "$NAME processing authoriites..." >>$AUTH_LOG
 			# Save the report results for catalogers.
-			cat $file.flat | $HOME/authority.pl -v"all" -o >>fix.flat 2>>log.txt
-			echo "$NAME done." >>authbot.log
+			cat $file.flat | $HOME/authority.pl -v"all" -o >>fix.flat 2>>$LOG
+			echo "$NAME done." >>$AUTH_LOG
 		fi
 		mv $file $file.done
 	done
@@ -197,13 +198,14 @@ function do_update {
 	then
 		if [ -s $DELETE_KEYS_FILE ]
 		then
-			echo "==>  $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..."
-			echo "$NAME $HOME/premarc.sh has created $DELETE_KEYS_FILE, removing these authorities..." >>authbot.log
-			cat $DELETE_KEYS_FILE | remauthority -u
+			echo "==>  created $DELETE_KEYS_FILE, removing these authorities..."
+			echo "$NAME created $DELETE_KEYS_FILE, removing these authorities..." >>$AUTH_LOG
+			echo "$NAME created $DELETE_KEYS_FILE, removing these authorities..." >>$LOG
+			cat $DELETE_KEYS_FILE | remauthority -u 2>>$LOG
 		fi
 		# There is a list of authority keys to remove but it's empty, get rid of it so we don't do this again if re-run.
 		echo "==>  authorities deleted."
-		echo "$NAME authorities deleted." >>authbot.log
+		echo "$NAME authorities deleted." >>$AUTH_LOG
 		rm $DELETE_KEYS_FILE
 	fi 
 	# Nothing to do since no authority keys to delete.
@@ -222,12 +224,12 @@ function do_update {
 		# *** Warning ***
 		# -fc: use 001 as match, -mb: update if possible, otherwise create, -q: set authorized date.
 		echo "==>  starting authload 'cat fix.flat | authload -fc -mb -q"$TODAY" -efix.flat.err'"
-		cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
+		cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys 2>>$LOG
 		echo "==>  done."
 		# Move the error report from authload into the log for the final error report.
-		echo "=== Contents of fix.flat.err: " >> log.txt
-		cat fix.flat.err >> log.txt
-		echo "=== End of contents of fix.flat.err: " >> log.txt
+		echo "=== Contents of fix.flat.err: " >> $LOG
+		cat fix.flat.err >> $LOG
+		echo "=== End of contents of fix.flat.err: " >> $LOG
 		echo "==>  testing and managing authedit.keys..."
 		if [ -s authedit.keys ]
 		then
@@ -238,13 +240,13 @@ function do_update {
 			randomselection.pl -r -fauthedit.keys >tmp.$$
 			if [ ! -s tmp.$$ ]
 			then
-				echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?" >>authbot.log
+				echo "$NAME ** Error: temp file of authedit.keys not made, was there a problem with randomselection.pl?" >>$AUTH_LOG
 				exit 1
 			fi
 			numKeys=$(cat tmp.$$ | wc -l)
 			if (( $numKeys <= $MAX_KEYS ))
 			then
-				echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys " >>authbot.log
+				echo "$NAME copying authedit.keys to ${BATCH_KEY_DIR}/authedit.keys " >>$AUTH_LOG
 				# There may already be an authedit.keys file in the Batchkeys directory, if there is add to it,
 				# if not one will be created.
 				if cat tmp.$$ >>${BATCH_KEY_DIR}/authedit.keys
@@ -252,8 +254,8 @@ function do_update {
 					rm tmp.$$
 				fi
 			else
-				echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested." >>authbot.log
-				echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'." >>authbot.log
+				echo "$NAME ** Warning: $numKeys keys found in authedit.keys but $MAX_KEYS requested." >>$AUTH_LOG
+				echo "$NAME ** Warning: split authedit.keys and copy the a section to '${BATCH_KEY_DIR}/authedit.keys'." >>$AUTH_LOG
 				exit 1
 			fi
 		else
@@ -273,7 +275,7 @@ function do_update {
 # Do we need to clean up from previous runs?
 if [ -e AllAuthKeysAndIDs.lst ]
 then
-	echo "$NAME removing AllAuthKeysAndIDs.lst from last time" >> authbot.log
+	echo "$NAME removing AllAuthKeysAndIDs.lst from last time" >> $AUTH_LOG
 	rm AllAuthKeysAndIDs.lst
 fi
 # If this hasn't been run since last month, or last zip file, we want to ensure that the old work is removed.
@@ -281,7 +283,7 @@ fi
 # records were affected.
 if [ -e authedit.keys ]
 then
-	echo "$NAME removing authedit.keys from last time" >> authbot.log
+	echo "$NAME removing authedit.keys from last time" >> $AUTH_LOG
 	rm authedit.keys
 fi
 # Get rid of the previous flat files too.
@@ -290,12 +292,12 @@ fi
 # No spaces.
 if ls *.flat >/dev/null
 then
-	echo "$NAME removing *.flat  files from last time" >> authbot.log
+	echo "$NAME removing *.flat  files from last time" >> $AUTH_LOG
 	rm *.flat
 fi
 # Initialize the logs for this run.
-echo "$NAME MAX_KEYS set to $MAX_KEYS." >>authbot.log
-echo "$NAME TODAY set to $TODAY." >>authbot.log
+echo "$NAME MAX_KEYS set to $MAX_KEYS." >>$AUTH_LOG
+echo "$NAME TODAY set to $TODAY." >>$AUTH_LOG
 # BSLW has switched things up a bit. Now they send mods too so order of loading matters.
 # The files are called  CNEDM1602U.zip, CNEDM1602N.zip, and CNEDM1602C.zip
 # They have to be loaded in this order
@@ -310,29 +312,32 @@ change_zip=`ls *C.zip`
 update_zip=`ls *U.zip`
 if [ -f "$new_zip" ]
 then
-	echo "renaming $new_zip to A.zip." >>authbot.log
+	echo "renaming $new_zip to A.zip." >>$AUTH_LOG
+	echo "found $new_zip." >>$LOG
 	mv $new_zip A.zip
 else
-	echo "**error Failed to find new authorities. Should be named '$new_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
+	echo "**error Failed to find new authorities. Should be named '$new_zip'. Load order of files from BSLW is important. exiting." >>$AUTH_LOG
 	echo "== **error Failed to find new authorities. Should be named '$new_zip'. Load order of files from BSLW is important. exiting."
 	exit 1
 fi
 # Now the changes
 if [ -f "$change_zip" ]
 then
-	echo "renaming $change_zip to B.zip." >>authbot.log
+	echo "renaming $change_zip to B.zip." >>$AUTH_LOG
+	echo "found $change_zip." >>$LOG
 	mv $change_zip B.zip
 else
-	echo "**error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting." >>authbot.log
+	echo "**error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting." >>$AUTH_LOG
 	echo "== **error Failed to find change authorities. Should be named '$change_zip'. Load order of files from BSLW is important. exiting."
 	exit 1
 fi
 if [ -f "$update_zip" ]
 then
-	echo "renaming $update_zip to C.zip." >>authbot.log
+	echo "renaming $update_zip to C.zip." >>$AUTH_LOG
+	echo "found $update_zip." >>$LOG
 	mv $update_zip C.zip
 else
-	echo "No update zip file found, moving right along." >>authbot.log
+	echo "No update zip file found, moving right along." >>$AUTH_LOG
 	echo "== No update zip file found, moving right along.."
 fi
 
@@ -347,7 +352,7 @@ then
 		if ls *.MRC
 		then
 			echo "== yes, removing."
-			echo "$NAME removing any MRC files from last time" >> authbot.log
+			echo "$NAME removing any MRC files from last time" >> $AUTH_LOG
 			rm *.MRC
 		else
 			echo "== no."
@@ -356,17 +361,17 @@ then
 		if ls BIB.MRC.*
 		then
 			echo "== yes, removing."
-			echo "$NAME removing any BIB.MRC.* report files from last time" >> authbot.log
+			echo "$NAME removing any BIB.MRC.* report files from last time" >> $AUTH_LOG
 			rm BIB.MRC.*
 		else
 			echo "== no."
 		fi
 		echo "== Unzipping $zip_file ..."
-		echo "$NAME Unzipping $zip_file" >>authbot.log
+		echo "$NAME Unzipping $zip_file" >>$AUTH_LOG
 		# Clean (rm) zip file so we don't do this over and over.
-		unzip $zip_file *.MRC >>authbot.log
+		unzip $zip_file *.MRC >>$LOG
 		## It is also possible they have packaged MRC files as 'mrc' files.
-		if unzip $zip_file *.mrc >>authbot.log 
+		if unzip $zip_file *.mrc >>$LOG 
 		then
 			# Rename the files so they will run with a standard extension of .MRC
 			for marc_file in *.mrc
@@ -386,5 +391,5 @@ fi
 mv A.zip $new_zip
 mv B.zip $change_zip
 mv C.zip $update_zip
-echo "$NAME end ===." >>authbot.log
+echo "$NAME end ===." >>$AUTH_LOG
 #EOF
