@@ -90,7 +90,7 @@ function do_update {
 	then
 		# And we concatenate to ensure we don't blow away any pre-existing adutext.keys file.
 		echo "==> checking bib match points on $BIB_MARC_FILE ..."
-		cat $BIB_MARC_FILE | flatskip -im -a'MARC' -of | nowrap.pl > $BIB_MARC_FILE.flat
+		cat $BIB_MARC_FILE | flatskip -im -a'MARC' -of | $BIN_CUSTOM/nowrap.pl > $BIB_MARC_FILE.flat
 		# Get all the matchpoint TCNs for comparison with our catalog.
 		grep "^\.035\.   |a(Sirsi)" $BIB_MARC_FILE.flat | $BIN_CUSTOM/pipe.pl -W'\s+' -oc2 -dc2 > $BIB_MARC_FILE.CatalogTag035s.lst
 		# next we get the number of these found in our catalog BOTH visible and shadowed, and report.
@@ -114,6 +114,10 @@ function do_update {
 		# cat $BIB_MARC_FILE | convMarc -ta | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
 		cat $BIB_MARC_FILE | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst
 		echo "==> done."
+		# Move the error report from authload into the log for the final error report.
+		echo "=== Contents of BIB.MRC.err: " >> log.txt
+		cat BIB.MRC.err >> log.txt
+		echo "=== End contents of BIB.MRC.err: " >> log.txt
 		echo "$NAME done catalogload." >>authbot.log
 		# Now copy all the affected catalog keys to ${workdir}/Batchkeys/adutext.keys in lieu of touchkeys on each.
 		# Adutext will throttle the load based on values specified in the report as outlined below.
@@ -220,6 +224,10 @@ function do_update {
 		echo "==>  starting authload 'cat fix.flat | authload -fc -mb -q"$TODAY" -efix.flat.err'"
 		cat fix.flat | authload -fc -mb -q"$TODAY" -e"fix.flat.err" > authedit.keys
 		echo "==>  done."
+		# Move the error report from authload into the log for the final error report.
+		echo "=== Contents of fix.flat.err: " >> log.txt
+		cat fix.flat.err >> log.txt
+		echo "=== End of contents of fix.flat.err: " >> log.txt
 		echo "==>  testing and managing authedit.keys..."
 		if [ -s authedit.keys ]
 		then
