@@ -33,24 +33,18 @@ REMOTE=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage/
 LOCAL=~/projects/authority/
 APP=authority.pl
 AUTH_BOT=authbot.sh
-RPT_APP=rptauthority.pl
 ARGS=-x
 .PHONY: compile test production all
 
 compile:
 	perl -c ${APP}
-	perl -c ${RPT_APP}
 
-test: ${LOCAL}${AUTH_BOT} ${LOCAL}${APP} ${LOCAL}${RPT_APP} compile
+test: ${LOCAL}${AUTH_BOT} ${LOCAL}${APP} compile
 	scp ${LOCAL}${AUTH_BOT} ${USER}@${TEST_SERVER}:${REMOTE}
 	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
-	scp ${LOCAL}${RPT_APP} ${USER}@${TEST_SERVER}:${REMOTE}
-	# ssh ${USER}@${TEST_SERVER} '${REMOTE}${APP} ${ARGS}'
 
-production: ${LOCAL}${AUTH_BOT} ${LOCAL}${APP} ${LOCAL}${RPT_APP} compile 
+production: ${LOCAL}${AUTH_BOT} ${LOCAL}${APP} compile 
 	scp ${LOCAL}${AUTH_BOT} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
 	scp ${LOCAL}${APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
-	scp ${LOCAL}${RPT_APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
-	# ssh ${USER}@${PRODUCTION_SERVER} '${REMOTE}${APP} ${ARGS}'
 
 all: compile test production
