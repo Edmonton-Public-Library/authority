@@ -356,15 +356,6 @@ then
 		else
 			echo "== no."
 		fi
-		echo "== testing if any BIB.MRC.* files."
-		if ls BIB.MRC.*
-		then
-			echo "== yes, removing."
-			echo "$NAME removing any BIB.MRC.* report files from last time" >> $AUTH_LOG
-			rm BIB.MRC.*
-		else
-			echo "== no."
-		fi
 		echo "== Unzipping $zip_file ..."
 		echo "$NAME Unzipping $zip_file" >>$AUTH_LOG
 		# Clean (rm) zip file so we don't do this over and over.
