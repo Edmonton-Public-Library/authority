@@ -102,7 +102,6 @@ function do_update {
 		cat "====== 035 matchpoint report =====" >>$LOG
 		cat $BIB_MARC_FILE.analyse >>$LOG
 		echo "$NAME finished checking match point report." >>$AUTH_LOG
-		mv 
 		echo "==> done."
 		# -im (default) MARC records will be read from standard input.
 		# -a (required) specifies the format of the record.
@@ -116,9 +115,9 @@ function do_update {
 		cat $BIB_MARC_FILE | catalogload -im -a'MARC' -bf -hn -mu -fS -e'BIB.MRC.err' > BIB.MRC.catkeys.lst 2>>$LOG
 		echo "==> done."
 		# Move the error report from authload into the log for the final error report.
-		echo "=== Contents of BIB.MRC.err: " >> $LOG
-		cat BIB.MRC.err >> $LOG
-		echo "=== End contents of BIB.MRC.err: " >> $LOG
+		echo "=== Contents of BIB.MRC.err: " >>$LOG
+		cat BIB.MRC.err >>$LOG
+		echo "=== End contents of BIB.MRC.err: " >>$LOG
 		echo "$NAME done catalogload." >>$AUTH_LOG
 		# Now copy all the affected catalog keys to ${workdir}/Batchkeys/adutext.keys in lieu of touchkeys on each.
 		# Adutext will throttle the load based on values specified in the report as outlined below.
