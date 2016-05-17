@@ -99,7 +99,7 @@ function do_update {
 		# Make a record of the file name and tags found in the on-going log file.
 		echo "$BIB_MARC_FILE" >>$LOG
 		cat $BIB_MARC_FILE | marcanalyze >>$LOG 2>$BIB_MARC_FILE.err
-		cat "====== 035 matchpoint report =====" >>$LOG
+		echo "====== 035 matchpoint report =====" >>$LOG
 		cat $BIB_MARC_FILE.analyse >>$LOG
 		echo "$NAME finished checking match point report." >>$AUTH_LOG
 		echo "==> done."
