@@ -57,6 +57,8 @@ export LANG=en_US.UTF-8
 export SHELL=/bin/bash
 export TODAY=`date +'%Y%m%d'`
 export NAME="[authbot.sh]"
+export ADDRESSEES="ilsadmins@epl.ca"
+export EMAIL_SUBJECT="Authority load report "`date`
 MAX_KEYS=1000000
 DELETE_KEYS_FILE=DEL.MRC.keys
 # BSLW always sends us the bibs MARC named 'BIB.MRC'
@@ -170,10 +172,16 @@ function do_update {
 	for file in "${marcFiles[@]}"
 	do
 		marcFileCount=$[$marcFileCount +1]
+		# Do a MRC analyse and report.
+		# Make a record of the file name and tags found in the on-going log file.
+		echo "$NAME checking $file analyse." >>$LOG
+		echo "$NAME checking $file analyse." >>$AUTH_LOG
+		cat $file | marcanalyze >>$LOG 2>>$AUTH_LOG
+		echo "$NAME finished checking $file analyse." >>$AUTH_LOG
 		echo "$NAME Found MARC file: '$file'. Processing: # $marcFileCount starting flatskip..." >>$AUTH_LOG
 		cat $file | flatskip -im -aMARC -of 2>>$AUTH_LOG | $BIN_CUSTOM/nowrap.pl 2>>$AUTH_LOG >$file.flat
 		marc_records=`egrep DOCUMENT $file.flat | wc -l`
-		echo "$file contains $marc_records " >> $LOG
+		echo "$file contains $marc_records " >>$LOG
 		echo "$NAME done flatskip." >>$AUTH_LOG
 		if [ $file = 'DEL.MRC' ]
 		then
@@ -192,6 +200,7 @@ function do_update {
 		mv $file $file.done
 	done
 	# process delete marc files.
+	echo "==> done."
 	# The bi-product of that process is called: 'DEL.MRC.keys'
 	if [ -e $DELETE_KEYS_FILE ]
 	then
@@ -381,5 +390,6 @@ fi
 mv A.zip $new_zip
 mv B.zip $change_zip
 mv C.zip $update_zip
+cat $LOG | mailx -s"$EMAIL_SUBJECT" "$ADDRESSEES"
 echo "$NAME end ===." >>$AUTH_LOG
 #EOF
