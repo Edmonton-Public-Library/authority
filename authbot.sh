@@ -32,6 +32,7 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           4.1 - Reduce report length as requested by staff. 
 #           4.0 - Proper, meaningful reporting for staff consumption. Refactored to get rid of premarc.sh and 
 #                 bibmarchpoint.sh. 
 #           3.3 - Much more reporting of each stage, minor changes to some file tests, fixed 
@@ -59,6 +60,7 @@ export TODAY=`date +'%Y%m%d'`
 export NAME="[authbot.sh]"
 export ADDRESSEES="ilsadmins@epl.ca"
 export EMAIL_SUBJECT="Authority load report "`date`
+export REPORT=$HOME/report.txt
 MAX_KEYS=1000000
 DELETE_KEYS_FILE=DEL.MRC.keys
 # BSLW always sends us the bibs MARC named 'BIB.MRC'
@@ -144,6 +146,8 @@ function do_update {
 				if [ -s temp_sort_keys.$$ ]
 				then
 					if cp temp_sort_keys.$$ ${BATCH_KEY_DIR}/adutext.keys
+					echo "Loaded bibs: " >> $REPORT
+					`cat temp_sort_keys.$$ | pipe.pl -tc0 -cc0` 2>> $REPORT
 					then
 						rm temp_sort_keys.$$
 					fi
@@ -390,6 +394,12 @@ fi
 mv A.zip $new_zip
 mv B.zip $change_zip
 mv C.zip $update_zip
-cat $LOG | mailx -s"$EMAIL_SUBJECT" "$ADDRESSEES"
+echo "Total authorities processed: " >> $REPORT
+# Pipe's summation command (-a) outputs to STDERR.
+`cat authbot.log | pipe.pl -W'\s+' -g'c1:marcin' -oc0 -ac0` 2>> $REPORT
+echo "" >> $REPORT
+echo "The following bib(s) produced errors: " >> $REPORT
+`cat $LOG | pipe.pl -g'c0:\.035\.\s+' -mc1:_#  -oc1 -dc1` >> $REPORT
+cat $REPORT | mailx -s"$EMAIL_SUBJECT" "$ADDRESSEES"
 echo "$NAME end ===." >>$AUTH_LOG
 #EOF
