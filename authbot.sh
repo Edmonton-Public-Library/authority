@@ -147,7 +147,7 @@ function do_update {
 				then
 					if cp temp_sort_keys.$$ ${BATCH_KEY_DIR}/adutext.keys
 					echo "Loaded bibs: " >> $REPORT
-					`cat temp_sort_keys.$$ | pipe.pl -tc0 -cc0` 2>> $REPORT
+					cat temp_sort_keys.$$ | pipe.pl -tc0 -cc0 2>> $REPORT
 					then
 						rm temp_sort_keys.$$
 					fi
@@ -396,10 +396,10 @@ mv B.zip $change_zip
 mv C.zip $update_zip
 echo "Total authorities processed: " >> $REPORT
 # Pipe's summation command (-a) outputs to STDERR.
-`cat authbot.log | pipe.pl -W'\s+' -g'c1:marcin' -oc0 -ac0` 2>> $REPORT
+cat authbot.log | pipe.pl -W'\s+' -g'c1:marcin' -oc0 -ac0 2>> $REPORT
 echo "" >> $REPORT
 echo "The following bib(s) produced errors: " >> $REPORT
-`cat $LOG | pipe.pl -g'c0:\.035\.\s+' -mc1:_#  -oc1 -dc1` >> $REPORT
+cat $LOG | pipe.pl -g'c0:\.035\.\s+' -m'c1:_#'  -oc1 -dc1 >> $REPORT
 cat $REPORT | mailx -s"$EMAIL_SUBJECT" "$ADDRESSEES"
 echo "$NAME end ===." >>$AUTH_LOG
 #EOF
