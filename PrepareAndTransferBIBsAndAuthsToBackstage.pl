@@ -50,18 +50,18 @@ $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 my $VERSION            = qq{0.1};
 chomp( my $BINCUSTOM   = `getpathname bincustom` );
 my $PIPE               = "$BINCUSTOM/pipe.pl";
-my $scriptrundate = `date +"%Y%m%d"`;
-$scriptrundate =~ s/^\s+//;
-$scriptrundate =~ s/\s+$//;
-my $formattedrundate = `date +"%Y/%m/%d"`;
-$formattedrundate =~ s/^\s+//;
-$formattedrundate =~ s/\s+$//;
-my $timetoday = `date +%H:%M:%S`;
-$timetoday =~ s/^\s+//;
-$timetoday =~ s/\s+$//;
+my $scriptrundate      = `date +"%Y%m%d"`;
+$scriptrundate         =~ s/^\s+//;
+$scriptrundate         =~ s/\s+$//;
+my $formattedrundate   = `date +"%Y/%m/%d"`;
+$formattedrundate      =~ s/^\s+//;
+$formattedrundate      =~ s/\s+$//;
+my $timetoday          = `date +%H:%M:%S`;
+$timetoday             =~ s/^\s+//;
+$timetoday             =~ s/\s+$//;
 my $datetimestamptoday = `date +%Y%m%d%H%M%S`;
-$datetimestamptoday =~ s/^\s+//;
-$datetimestamptoday =~ s/\s+$//;
+$datetimestamptoday    =~ s/^\s+//;
+$datetimestamptoday    =~ s/\s+$//;
 ##my $DateCreatedStart = system "transdate -m-0"; #returns first day of current month
 ##my $DateCreatedStart = system "transdate -m-1"; #returns first day of prior month
 ##my $DateCreatedStart = system "transdate -o`date +"%Y%m%d"`-1";  #returns exactly one month from today's date
@@ -86,12 +86,12 @@ my $DateEnd = $YearOneDayAgo . $MonthOneDayAgo . $DayOneDayAgo;  #ANSI Date form
 ##--------------------------------------------------------------------------
 ##PLEASE NOTE: CHANGE THE DATES FOR THE VARIABLES BELOW FOR EACH MONTHS RUN OF THIS SCRIPT:
 ##--------------------------------------------------------------------------
-my $DateBIBCatalogedStart = "20160719";
-my $DateBIBCatalogedEnd = "20160819";
-my $DateAuthCreatedStart = "20160719";
-my $DateAuthCreatedEnd = "20160819";
-my $DateAuthModifiedStart = "20160719";
-my $DateAuthModifiedEnd = "20160819";
+my $DateBIBCatalogedStart = "";
+my $DateBIBCatalogedEnd   = "";
+my $DateAuthCreatedStart  = "";
+my $DateAuthCreatedEnd    = "";
+my $DateAuthModifiedStart = "";
+my $DateAuthModifiedEnd   = "";
 ##--------------------------------------------------------------------------
 my $host = 'ftp.bslw.com';
 ##Note that the remote upload path is 'in' and 'out' seems to be the download path
@@ -298,34 +298,41 @@ if ( $opt{'f'} )
 	print LOGFILE "Attempting to FTP the files to the Backstage FTP site...\n";
 	print LOGFILE "$datetimestamptoday - Transfer BIBs and Auths to BackStage Library Works...\n";
 	#if ($ftp = Net::FTP->new($host, Debug => 3)) {
-	if ($ftp = Net::FTP->new($host)) {
-	  if ($ftp->login("$login","$passwd")) {
-		$ftp->pasv();
-		$ftp->binary();
-		$ftp->cwd("/in") or die "Cannot change working remote FTP directory ", $ftp->message;
-		print LOGFILE "$datetimestamptoday - Current Remote FTP Directory: $ftp->pwd()\n";
-		print LOGFILE "$datetimestamptoday - FTPLogin: $login  FileXferMode: passive binary\n";
-		#@files = <${scriptdatadirectory}/*.mrc>;
-		@files = <${scriptdatadirectory}/*.mrc.gz>;
-		  foreach $file (@files) {
-			print LOGFILE "$datetimestamptoday - FTP PUT File: $file...\n";
-			if ($ftp->put("$file")) {
-			  print LOGFILE "$datetimestamptoday - FTP PUT File status=DONE\n";
-			  }
-			else {
-			  print LOGFILE "$datetimestamptoday - FTP PUT File status=ERROR\n";
-				  print LOGFILE "$datetimestamptoday - $ftp->message\n";
-			  }
+	if ($ftp = Net::FTP->new($host)) 
+	{
+		if ($ftp->login("$login","$passwd")) 
+		{
+			$ftp->pasv();
+			$ftp->binary();
+			$ftp->cwd("/in") or die "Cannot change working remote FTP directory ", $ftp->message;
+			print LOGFILE "$datetimestamptoday - Current Remote FTP Directory: $ftp->pwd()\n";
+			print LOGFILE "$datetimestamptoday - FTPLogin: $login  FileXferMode: passive binary\n";
+			#@files = <${scriptdatadirectory}/*.mrc>;
+			@files = <${scriptdatadirectory}/*.mrc.gz>;
+			foreach $file (@files) 
+			{
+				print LOGFILE "$datetimestamptoday - FTP PUT File: $file...\n";
+				if ($ftp->put("$file")) 
+				{
+					print LOGFILE "$datetimestamptoday - FTP PUT File status=DONE\n";
+				}
+				else 
+				{
+					print LOGFILE "$datetimestamptoday - FTP PUT File status=ERROR\n";
+					print LOGFILE "$datetimestamptoday - $ftp->message\n";
+				}
 			}
-		$ftp->quit;
+			$ftp->quit;
 		}
-	  else {
-		print LOGFILE "$datetimestamptoday - ERROR: unable to LOGIN to FTP server\n";
+		else 
+		{
+			print LOGFILE "$datetimestamptoday - ERROR: unable to LOGIN to FTP server\n";
 		}
-	  }
-	else {
-	  print LOGFILE "$datetimestamptoday - ERROR: unable to CONNECT to FTP server\n";
-	  }
+	}
+	else 
+	{
+		print LOGFILE "$datetimestamptoday - ERROR: unable to CONNECT to FTP server\n";
+	}
 }
 ##--------------------------------------------------------------------------
 $formattedrundate = `date +"%Y/%m/%d"`;
@@ -341,7 +348,8 @@ print LOGFILE "Script execution complete!\n";
 close LOGFILE;
 ##--------------------------------------------------------------------------
 ##check if file exists and has a non-zero filesize
-if (-s $logfilepathandname) {
-  `cat $logfilepathandname | mailx -s \"$logfileemailsubject\" \"$emailrecipients\"`;
-  }
+if (-s $logfilepathandname) 
+{
+	`cat $logfilepathandname | mailx -s \"$logfileemailsubject\" \"$emailrecipients\"`;
+}
 ##--------------------------------------------------------------------------

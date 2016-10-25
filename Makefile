@@ -30,21 +30,26 @@ PRODUCTION_SERVER=eplapp.library.ualberta.ca
 TEST_SERVER=edpl-t.library.ualberta.ca
 USER=sirsi
 REMOTE=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage/
+REMOTE_CREATE=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesForBackStage/
 LOCAL=~/projects/authority/
 APP=authority.pl
 AUTH_BOT=authbot.sh
+AUTH_CREATE=PrepareAndTransferBIBsAndAuthsToBackstage.pl
 ARGS=-x
 .PHONY: compile test production all
 
 compile:
 	perl -c ${APP}
+	perl -c ${AUTH_CREATE}
 
 test: ${LOCAL}${AUTH_BOT} ${LOCAL}${APP} compile
 	scp ${LOCAL}${AUTH_BOT} ${USER}@${TEST_SERVER}:${REMOTE}
 	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
+	scp ${LOCAL}${AUTH_CREATE} ${USER}@${TEST_SERVER}:${REMOTE_CREATE}
 
 production: ${LOCAL}${AUTH_BOT} ${LOCAL}${APP} compile 
 	scp ${LOCAL}${AUTH_BOT} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
 	scp ${LOCAL}${APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
+	scp ${LOCAL}${AUTH_CREATE} ${USER}@${PRODUCTION_SERVER}:${REMOTE_CREATE}
 
 all: compile test production
