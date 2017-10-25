@@ -32,6 +32,7 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           4.2 - Improve record counting and reporting. 
 #           4.1 - Reduce report length as requested by staff. 
 #           4.0 - Proper, meaningful reporting for staff consumption. Refactored to get rid of premarc.sh and 
 #                 bibmarchpoint.sh. 
@@ -65,12 +66,17 @@ MAX_KEYS=1000000
 DELETE_KEYS_FILE=DEL.MRC.keys
 # BSLW always sends us the bibs MARC named 'BIB.MRC'
 BIB_MARC_FILE=BIB.MRC
-LOG=log.txt
+LOG=$HOME/log.txt
 AUTH_LOG=authbot.log
 
 # Lets go to the directory where all this is going to be done.
 cd $HOME
-
+# Make sure we remove any existing log because our reporting depends on the counts found in
+# the output from the running of this script.
+if [ -s $LOG ]
+then
+	rm $LOG
+fi
 if [ $1 ]
 then
 	MAX_KEYS=$1
@@ -146,7 +152,7 @@ function do_update {
 				if [ -s temp_sort_keys.$$ ]
 				then
 					if cp temp_sort_keys.$$ ${BATCH_KEY_DIR}/adutext.keys
-					echo "Loaded bibs: " >> $REPORT
+					echo "Unique bib keys: " >> $REPORT
 					cat temp_sort_keys.$$ | pipe.pl -tc0 -cc0 2>> $REPORT
 					then
 						rm temp_sort_keys.$$
@@ -396,7 +402,16 @@ mv B.zip $change_zip
 mv C.zip $update_zip
 echo "Total authorities processed: " >> $REPORT
 # Pipe's summation command (-a) outputs to STDERR.
-cat authbot.log | pipe.pl -W'\s+' -g'c1:marcin' -oc0 -ac0 2>> $REPORT
+# cat authbot.log | pipe.pl -W'\s+' -g'c1:marcin' -oc0 -ac0 2>> $REPORT
+cat $LOG | egrep "Record type" | egrep Authority | pipe.pl -W'Count:' -ac1 -oc1 >/dev/null 2>> $REPORT
+# ==       sum
+# c1:    5443
+echo "" >> $REPORT
+echo "Total bib records processed: " >> $REPORT
+# Find the total bibs loaded. We don't want the actual outputs, just the sum:.
+cat $LOG | egrep "Record type" | egrep Bibliographic | pipe.pl -W'Count:' -ac1 -oc1 >/dev/null 2>> $REPORT
+# ==       sum
+# c1:    3562
 echo "" >> $REPORT
 echo "The following bib(s) produced errors: " >> $REPORT
 cat $LOG | pipe.pl -g'c0:\.035\.\s+' -m'c1:_#'  -oc1 -dc1 >> $REPORT
