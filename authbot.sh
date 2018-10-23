@@ -416,6 +416,6 @@ cat $LOG | egrep "Record type" | egrep Bibliographic | pipe.pl -W'Count:' -ac1 -
 echo "" >> $REPORT
 echo "The following bib(s) produced errors: " >> $REPORT
 cat $LOG | pipe.pl -g'c0:\.035\.\s+' -m'c1:_#'  -oc1 -dc1 >> $REPORT
-echo "Please find authorities load report dated "`date +%Y-%m-%d`" attached." | mailx -s"$EMAIL_SUBJECT" -a $REPORT "$ADDRESSEES"
+echo "Authorities loaded on "`hostname`" on "`date`". Please find load report attached." | mailx -s"$EMAIL_SUBJECT" -a $REPORT "$ADDRESSEES"
 echo "$NAME end ===." >>$AUTH_LOG
 #EOF
