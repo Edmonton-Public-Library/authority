@@ -32,6 +32,7 @@
 #          than the maximum expected authorities.
 #
 # Revision:
+#           4.3 - Port to Redhat which in this case means not using uuencode. 
 #           4.2 - Improve record counting and reporting. 
 #           4.1 - Reduce report length as requested by staff. 
 #           4.0 - Proper, meaningful reporting for staff consumption. Refactored to get rid of premarc.sh and 
@@ -415,6 +416,6 @@ cat $LOG | egrep "Record type" | egrep Bibliographic | pipe.pl -W'Count:' -ac1 -
 echo "" >> $REPORT
 echo "The following bib(s) produced errors: " >> $REPORT
 cat $LOG | pipe.pl -g'c0:\.035\.\s+' -m'c1:_#'  -oc1 -dc1 >> $REPORT
-cat $REPORT | mailx -s"$EMAIL_SUBJECT" "$ADDRESSEES"
+echo "Please find authorities load report dated "`date +%Y-%m-%d`" attached." | mailx -s"$EMAIL_SUBJECT" -a $REPORT "$ADDRESSEES"
 echo "$NAME end ===." >>$AUTH_LOG
 #EOF
