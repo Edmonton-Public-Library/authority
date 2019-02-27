@@ -33,6 +33,7 @@
 #
 # Revision:
 #           5.0 - Fix bug that is loading Bibs as authorities. 
+#           4.4 - Added date times stamps to all messages sent to stderr. 
 #           4.3 - Port to Redhat which in this case means not using uuencode. 
 #           4.2 - Improve record counting and reporting. 
 #           4.1 - Reduce report length as requested by staff. 
@@ -70,7 +71,7 @@ DELETE_KEYS_FILE=DEL.MRC.keys
 BIB_MARC_FILE=BIB.MRC
 LOG=$HOME/log.txt
 AUTH_LOG=authbot.log
-
+VERSION="4.4"
 # Lets go to the directory where all this is going to be done.
 cd $HOME
 # Make sure we remove any existing log because our reporting depends on the counts found in
