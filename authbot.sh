@@ -128,9 +128,9 @@ Flags:
    
  Example:
     Process new (notif) file from February 2019 instead of the current month with debugging messages.
-    authbot.2.0.sh -d1902 -Dn
+    ./authbot.sh -d1902 -Dn
     Process all authority files in the directory.
-    authbot.2.0.sh -a
+    ./authbot.sh -a
  Version: $VERSION
 EOFU!
 }
