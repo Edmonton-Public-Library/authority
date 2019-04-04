@@ -38,14 +38,14 @@ AUTH_CREATE=PrepareAndTransferBIBsAndAuthsToBackstage.pl
 ARGS=-x
 .PHONY: compile test production all
 
-compile:
-	perl -c ${APP}
-	perl -c ${AUTH_CREATE}
-
 test: ${LOCAL}${AUTH_BOT} ${LOCAL}${APP} compile
 	scp ${LOCAL}${AUTH_BOT} ${USER}@${TEST_SERVER}:${REMOTE}
 	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
 	scp ${LOCAL}${AUTH_CREATE} ${USER}@${TEST_SERVER}:${REMOTE_CREATE}
+
+compile:
+	perl -c ${APP}
+	perl -c ${AUTH_CREATE}
 
 production: ${LOCAL}${AUTH_BOT} ${LOCAL}${APP} compile 
 	scp ${LOCAL}${AUTH_BOT} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
