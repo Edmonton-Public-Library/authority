@@ -42,7 +42,7 @@
 #
 ############################################################################################
 HOME=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
-VERSION="2.0_i"
+VERSION="2.0_j"
 MAX_KEYS=1000000
 INSTITUTION="CNEDM"
 FILE_DATE=$(date +%y%m)  # File name format: CNEDMYYMMN.zip
@@ -91,7 +91,9 @@ test_requires()
     require $BIN/remauthority
     require $BINCUSTOM/pipe.pl
     require $BIN/catalogload
+    require $BIN/seltext
     require /bin/unzip
+    require /bin/date
 }
 
 # Displays the usage for this product.
@@ -100,7 +102,7 @@ test_requires()
 usage()
 {
     cat << EOFU!
- Usage: $0 
+ Usage: $0 -x
   Processes and load authorities and bib MARC files received from BackStage Library Works
   (BSLW). These files are typically sent as zip files named for the type of changes 
   the MRC files represent.
