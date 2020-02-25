@@ -138,3 +138,5 @@ rm tmp.$$
 # Touch the file so the next time it runs we can compare which files were added after we run now.
 touch $TOUCH_FILE
 echo "$NAME $marcFileCount fresh files done." >>authbot.log
+
+
