@@ -297,7 +297,8 @@ if ( $opt{'D'} )
 {
     # make a copy of the authority marc file and send as results for dry run.
     `cp ${scriptrundate}_EPL_Authority_Records.mrc authority_records.mrc`;
-    `echo -e "Please find MARC files for authorities dated: $DateAuthCreatedStart to $DateAuthCreatedEnd\nSigned: PrepareAndTransferBIBsAndAuthsToBackstage.pl\n" | mailx -s"Authority files for BSLW $DateAuthCreatedStart to $DateAuthCreatedEnd" -a authority_records.mrc -a catalog_records.mrc andrew.nisbet\@epl.ca`;
+    # The files are too big and we only have gzip which can't make standard zip files.
+    `echo -e "Please find MARC files for authorities dated: $DateAuthCreatedStart to $DateAuthCreatedEnd\nSigned: PrepareAndTransferBIBsAndAuthsToBackstage.pl\n" | mailx -s"Authority files for BSLW $DateAuthCreatedStart to $DateAuthCreatedEnd" andrew.nisbet\@epl.ca`;
 }
 ##compress Authority MARC file for upload to Backstage
 print LOGFILE "Compressing the Authority MARC file for transfer to the BackStage FTP site...\n";
