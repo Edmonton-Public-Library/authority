@@ -4,7 +4,7 @@
 # Perl source file for project gh 
 #
 # Prepares authority files for Backstage Library Works (BSLW).
-#    Copyright (C) 2016  Andrew Nisbet
+#    Copyright (C) 2020  Andrew Nisbet
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Thu Jul 14 10:34:28 MDT 2016
 # Rev: 
+#          0.2 - Add dry run feature to speed up check files. 
 #          0.1 - Bug in clean doesn't output entire line. FIXED. 
 #          0.0 - Dev. 
 #
@@ -47,7 +48,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ##--------------------------------------------------------------------------
-my $VERSION            = qq{0.1};
+my $VERSION            = qq{0.2};
 chomp( my $BINCUSTOM   = `getpathname bincustom` );
 my $PIPE               = "$BINCUSTOM/pipe.pl";
 my $scriptrundate      = `date +"%Y%m%d"`;
@@ -113,10 +114,11 @@ sub usage()
 {
     print STDERR << "EOF";
 
-	usage: $0 [-dfx]
+	usage: $0 [-d{YYYYMMDD,YYYYMMDD}Dfx]
 Prepares authority extracts for Backstage Library Works (BSLW).
 
- -d: (REQUIRED) Date range selection. Range specified with start and end dates in ANSI format (YYYMMDD).
+ -d: (REQUIRED) Date range selection. Range specified with start and end dates in ANSI format (YYYMMDD), and are comma ',' separated.
+ -D: Dry run mode. Do everything but don't zip up the MARC files and email them to ILSadmins\@epl.ca.
  -f: FTP files to BSLW.
  -x: This (help) message.
 
@@ -124,6 +126,7 @@ example:
   $0 -x
 Usually you can do
   ./PrepareAndTransferBIBsAndAuthsToBackstage.pl -d20160619,20160719
+  ./PrepareAndTransferBIBsAndAuthsToBackstage.pl -d20200123,20200225 -D
 Or if you prefer to automatically send the files to BSLW then use the command below.
   ./PrepareAndTransferBIBsAndAuthsToBackstage.pl -f -d20160619,20160719
 Version: $VERSION
@@ -136,7 +139,7 @@ EOF
 # return: 
 sub init
 {
-    my $opt_string = 'd:fx';
+    my $opt_string = 'd:Dfx';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	if ( $opt{'d'} )
@@ -262,6 +265,10 @@ print LOGFILE "Sending catalog keys to the catalogdump API command to prepare th
 `cat ${scriptrundate}_EPL_Catalog_Records.mrc | marcanalyze -lt > ${scriptrundate}_EPL_Catalog_Records_marcanalyze.txt 2>>${logfilepathandname}`;
 `cat ${scriptrundate}_EPL_Catalog_Records.mrc | flatskip -im -aLCSH -of 2>>${logfilepathandname} | nowrap.pl > ${scriptrundate}_EPL_Catalog_Records.flat 2>>${logfilepathandname}`;
 ##--------------------------------------------------------------------------
+if ( $opt{'D'} )
+{
+    `cp ${scriptrundate}_EPL_Catalog_Records.mrc catalog_records.mrc`;
+}
 ##compress Catalog MARC file for upload to Backstage
 print LOGFILE "Compressing the BIB MARC file for transfer to the BackStage FTP site...\n";
 `gzip -f ${scriptrundate}_EPL_Catalog_Records.mrc > ${scriptrundate}_EPL_Catalog_Records.mrc.gz 2>>${logfilepathandname}`;
@@ -286,6 +293,12 @@ print LOGFILE "Sending authority keys to the authdump API command to prepare the
 `cat ${scriptrundate}_EPL_Authority_Records.mrc | marcanalyze -lt > ${scriptrundate}_EPL_Authority_Records_marcanalyze.txt 2>>${logfilepathandname}` ;
 `cat ${scriptrundate}_EPL_Authority_Records.mrc | flatskip -im -aLCSH -of 2>>${logfilepathandname} | nowrap.pl > ${scriptrundate}_EPL_Authority_Records.flat 2>>${logfilepathandname}`;
 ##--------------------------------------------------------------------------
+if ( $opt{'D'} )
+{
+    # make a copy of the authority marc file and send as results for dry run.
+    `cp ${scriptrundate}_EPL_Authority_Records.mrc authority_records.mrc`;
+    `echo -e "Please find MARC files for authorities dated: $DateAuthCreatedStart to $DateAuthCreatedEnd\nSigned: PrepareAndTransferBIBsAndAuthsToBackstage.pl\n" | mailx -s"Authority files for BSLW $DateAuthCreatedStart to $DateAuthCreatedEnd" -a authority_records.mrc -a catalog_records.mrc andrew.nisbet\@epl.ca`;
+}
 ##compress Authority MARC file for upload to Backstage
 print LOGFILE "Compressing the Authority MARC file for transfer to the BackStage FTP site...\n";
 `gzip -f ${scriptrundate}_EPL_Authority_Records.mrc > ${scriptrundate}_EPL_Authority_Records.mrc.gz 2>>${logfilepathandname}`;
