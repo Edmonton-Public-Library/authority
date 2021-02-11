@@ -23,7 +23,7 @@
 # MA 02110-1301, USA.
 #
 # Instructions:
-# 1) Place all downloaded zip files from BSLW into $HOME 
+# 1) Place all downloaded zip files from BSLW into $WORK_DIR_AN 
 #    (/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage).
 # 2) Run authbot.sh -K {MAX_KEYS} (where MAX_KEYS is an integer) which will:
 #   i) Process marc files into a single normalized fixed.flat file.
@@ -41,7 +41,7 @@
 #           2.0 - Refactoring of authbot.sh V4.3.
 #
 ############################################################################################
-HOME=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
+WORK_DIR_AN=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
 VERSION="2.0_j"
 MAX_KEYS=1000000
 INSTITUTION="CNEDM"
@@ -51,14 +51,14 @@ BINCUSTOM=$(getpathname bincustom)
 BIN=$(getpathname bin)
 WORK_DIR=$(getpathname workdir)
 BATCH_KEY_DIR=$WORK_DIR/Batchkeys
-NEW=$HOME/${INSTITUTION}${FILE_DATE}N.zip
-CHANGE=$HOME/${INSTITUTION}${FILE_DATE}C.zip
-UPDATE=$HOME/${INSTITUTION}${FILE_DATE}U.zip
-LOG=$HOME/authbot.log
-BACKUP=$HOME/Bak
-ZIP=$HOME/Zip.tmp
-FIX_FLAT=$HOME/fix.flat
-DELETE_KEYS_FILE=$HOME/DEL.MRC.keys
+NEW=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}N.zip
+CHANGE=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}C.zip
+UPDATE=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}U.zip
+LOG=$WORK_DIR_AN/authbot.log
+BACKUP=$WORK_DIR_AN/Bak
+ZIP=$WORK_DIR_AN/Zip.tmp
+FIX_FLAT=$WORK_DIR_AN/fix.flat
+DELETE_KEYS_FILE=$WORK_DIR_AN/DEL.MRC.keys
 EMAILS="andrew.nisbet@epl.ca"
 
 TRUE=0
@@ -77,7 +77,7 @@ require()
     fi
 }
 
-# Test for all the required applications. $BIN, /bin, $BINCUSTOM, and $HOME must exist and be 
+# Test for all the required applications. $BIN, /bin, $BINCUSTOM, and $WORK_DIR_AN must exist and be 
 # declared in $PATH
 # param:  none
 test_requires()
@@ -87,7 +87,7 @@ test_requires()
     require $BIN/marcanalyze
     require $BIN/flatskip
     require $BINCUSTOM/nowrap.pl
-    require $HOME/authority.pl
+    require $WORK_DIR_AN/authority.pl
     require $BIN/remauthority
     require $BINCUSTOM/pipe.pl
     require $BIN/catalogload
@@ -192,7 +192,7 @@ get_MRC_files()
     local zip_file=$1
     # First get rid of any existing .MRC or .mrc files.
     if rm *.MRC 2>/dev/null; then
-        logit $LOG "removed pre-existing *.MRC files from $HOME."
+        logit $LOG "removed pre-existing *.MRC files from $WORK_DIR_AN."
     fi
     if [ ! -d "$BACKUP" ]; then
         logit $LOG "creating backup directory $BACKUP."
@@ -344,13 +344,13 @@ process_authorities()
             # Of which there is 1 in every shipment, but only found in the *N.zip file.
             logit $LOG " processing deleted authorities..."
             # Save the report results for catalogers.
-            cat $file.flat | $HOME/authority.pl -d > $DELETE_KEYS_FILE 2>>$LOG
+            cat $file.flat | $WORK_DIR_AN/authority.pl -d > $DELETE_KEYS_FILE 2>>$LOG
             logit $LOG " done."
         else
             # Which you don't get with *C.zip
             logit $LOG " processing authorities..." 
             # Save the report results for catalogers.
-            cat $file.flat | $HOME/authority.pl -v"all" -o >>$FIX_FLAT 2>>$LOG
+            cat $file.flat | $WORK_DIR_AN/authority.pl -v"all" -o >>$FIX_FLAT 2>>$LOG
             logit $LOG " done." 
         fi
         # Clean up the source MRC so we don't reprocess it.
@@ -444,7 +444,7 @@ process_zipped()
 }
 
 ################################# Run section #################################
-cd $HOME
+cd $WORK_DIR_AN
 if [ -s "$LOG" ]; then
     ANSWER=$(confirm "remove existing log file ")
     if [ "$ANSWER" == "$TRUE" ]; then
@@ -476,9 +476,9 @@ while getopts ":acd:DK:nux" opt; do
         ;;
 	d)  logit $LOG " -d looking for ${INSTITUTION}$OPTARG*.zip files instead of the current year/month."
         FILE_DATE=$OPTARG
-        NEW=$HOME/${INSTITUTION}${FILE_DATE}N.zip
-        CHANGE=$HOME/${INSTITUTION}${FILE_DATE}C.zip
-        UPDATE=$HOME/${INSTITUTION}${FILE_DATE}U.zip
+        NEW=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}N.zip
+        CHANGE=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}C.zip
+        UPDATE=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}U.zip
         ;;
 	K)  logit $LOG " -K throttling adutext to $OPTARG keys."
         MAX_KEYS=$OPTARG
@@ -494,9 +494,9 @@ while getopts ":acd:DK:nux" opt; do
             exit 1
         fi
         # In case the user has selected -d.
-        NEW=$HOME/${INSTITUTION}${FILE_DATE}N.zip
-        CHANGE=$HOME/${INSTITUTION}${FILE_DATE}C.zip
-        UPDATE=$HOME/${INSTITUTION}${FILE_DATE}U.zip
+        NEW=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}N.zip
+        CHANGE=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}C.zip
+        UPDATE=$WORK_DIR_AN/${INSTITUTION}${FILE_DATE}U.zip
         test_requires
         process_zipped $UPDATE
         ;;
