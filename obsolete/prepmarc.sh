@@ -42,7 +42,7 @@
 # 1.0 - initial release.
 #
 ############################################################################################
-export HOME=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
+export WORK_DIR_AN=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
 export LANG=en_US.UTF-8
 export SHELL=/bin/bash
 export NAME="[prepmarc.sh]"
@@ -52,11 +52,11 @@ LAST_RUN=0
 LAST_RUN_DATE=""
 
 # Test for the customer directory and cd there.
-if [ -e $HOME ]
+if [ -e $WORK_DIR_AN ]
 then
-	cd $HOME
+	cd $WORK_DIR_AN
 else
-	echo "$NAME **error: invalid configuration. '$HOME' doesn't exist." >>authbot.log
+	echo "$NAME **error: invalid configuration. '$WORK_DIR_AN' doesn't exist." >>authbot.log
 	exit 1
 fi
 
