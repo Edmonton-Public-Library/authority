@@ -38,6 +38,15 @@
 ##Script update date....: 2016/07/07
 #####################################################################################################################################
 use strict;
+chomp($ENV{'HOME'} = `. ~/.bashrc; echo ~`);
+open(my $IN, "<", "$ENV{'HOME'}/Unicorn/Config/environ") or die "$0: $! $ENV{'HOME'}/Unicorn/Config/environ\n";
+while(<$IN>)
+{
+    chomp;
+    my ($key, $value) = split(/=/, $_);
+    $ENV{$key} = "$value";
+}
+close($IN);
 use Net::FTP;
 use warnings;
 use vars qw/ %opt /;
@@ -45,8 +54,8 @@ use Getopt::Std;
 ##--------------------------------------------------------------------------
 ##set environment variables
 ##--------------------------------------------------------------------------
-$ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
-$ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
+# $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
+# $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ##--------------------------------------------------------------------------
 my $VERSION            = qq{0.2};
 chomp( my $BINCUSTOM   = `getpathname bincustom` );
