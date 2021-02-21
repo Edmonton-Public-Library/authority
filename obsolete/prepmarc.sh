@@ -42,7 +42,7 @@
 # 1.0 - initial release.
 #
 ############################################################################################
-export WORK_DIR_AN=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
+export WORK_DIR_AN=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
 export LANG=en_US.UTF-8
 export SHELL=/bin/bash
 export NAME="[prepmarc.sh]"
