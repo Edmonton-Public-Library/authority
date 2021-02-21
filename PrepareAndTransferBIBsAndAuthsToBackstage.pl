@@ -1,4 +1,4 @@
-#!/s/sirsi/Unicorn/Bin/perl -w
+#!/software/EDPL/Unicorn/Bin/perl -w
 ######################################################################################################################################
 #
 # Perl source file for project gh 
@@ -54,8 +54,8 @@ use Getopt::Std;
 ##--------------------------------------------------------------------------
 ##set environment variables
 ##--------------------------------------------------------------------------
-# $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
-# $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
+# $ENV{'PATH'}  = qq{:/software/EDPL/Unicorn/Bincustom:/software/EDPL/Unicorn/Bin:/usr/bin:/usr/sbin};
+# $ENV{'UPATH'} = qq{/software/EDPL/Unicorn/Config/upath};
 ##--------------------------------------------------------------------------
 my $VERSION            = qq{0.2};
 chomp( my $BINCUSTOM   = `getpathname bincustom` );
@@ -109,7 +109,7 @@ my $login = 'tcnedm1';
 my $passwd = 'tcnedm1';
 my $emailrecipients = "ilsadmins\@epl.ca";
 my $logfileemailsubject = "Prepare And Transfer BIB and Authority Files to BSLW FTP Site (Process Log) for Date: $formattedrundate";
-my $scriptdatadirectory = qq{/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesForBackStage/${scriptrundate}};
+my $scriptdatadirectory = qq{/software/EDPL/Unicorn/EPLwork/cronjobscripts/Authorities/FilesForBackStage/${scriptrundate}};
 my $ftp = '';
 my $file = '';
 my @files = ();
