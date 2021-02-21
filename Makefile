@@ -26,11 +26,11 @@
 #      0.0 - Dev. 
 ####################################################
 # Change comment below for appropriate server.
-PRODUCTION_SERVER=eplapp.library.ualberta.ca
+PRODUCTION_SERVER=edpl.sirsidynix.net
 TEST_SERVER=edpl-t.library.ualberta.ca
 USER=sirsi
-REMOTE=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage/
-REMOTE_CREATE=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesForBackStage/
+REMOTE=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage/
+REMOTE_CREATE=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Authorities/FilesForBackStage/
 LOCAL=~/projects/authority/
 APP=authority.pl
 AUTH_BOT=authbot.sh
