@@ -24,7 +24,7 @@
 #
 # Instructions:
 # 1) Place all downloaded zip files from BSLW into $WORK_DIR_AN 
-#    (/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage).
+#    (/software/EDPL/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage).
 # 2) Run authbot.sh -K {MAX_KEYS} (where MAX_KEYS is an integer) which will:
 #   i) Process marc files into a single normalized fixed.flat file.
 #   ii) Load the fixed.flat file. 
@@ -41,7 +41,7 @@
 #           2.0 - Refactoring of authbot.sh V4.3.
 #
 ############################################################################################
-WORK_DIR_AN=/s/sirsi/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
+WORK_DIR_AN=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Authorities/FilesFromBackStage
 VERSION="2.0_j"
 MAX_KEYS=1000000
 INSTITUTION="CNEDM"
