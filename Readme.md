@@ -1,10 +1,11 @@
-=== Mon Dec 22 10:07:38 MST 2014 ===
+Project started: Mon Dec 22 10:07:38 MST 2014
 
 
 
-Update February 20, 2016
-========================
-From: Stephanie Hansen [mailto:shansen@bslw.com] 
+## Update February 20, 2016
+
+
+<em>From: Stephanie Hansen [mailto:shansen@bslw.com] 
 Sent: February-19-16 12:30 PM
 To: Shona Dippie; ILS Admins
 Cc: Stephanie Hansen
@@ -38,44 +39,50 @@ LC.GENRE.mrc - 2 records
 NAME.NEW.mrc - 94 records
 SUBJ.NEW.mrc - 94 records
 TITLE.NEW.mrc - 1 records
+</em>
 
-Project Notes
-=============
-Instructions for Running:
-Validate an incoming or outgoing flat files -v shows all warnings (use "update" to not show failed matches on new
-records). '-o' will output all changes. Unmatched authority IDs will be output untouched, but matching authority IDs 
+# Project Notes
+
+## Instructions for Running:
+Validate an incoming or outgoing flat files `-v` shows all warnings (use "update" to not show failed matches on new
+records). '`-o`' will output all changes. Unmatched authority IDs will be output untouched, but matching authority IDs 
 are output as normalized, so they can match the normalized IDs in Symphony. In this one step you will get flat output
 that you can update on match and create on no match (see authload -x) and match success rate. Match points for Authorities
 are always considered to be 001, while match point for bib records are the TCN (in the 035 tag).
- cat 20150107_EPL_Authority_Records.flat | ./authority.pl -v"all" -o >fixed20150107.flat
+```bash
+cat 20150107_EPL_Authority_Records.flat | ./authority.pl -v"all" -o >fixed20150107.flat
+```
  
 During operation the script will create a dump of authority keys and authority IDs which it will attempt to match the
 authority records passed in on STDIN. With no switches it will report the match rate and some other interesting 
 stats. If you want a loadable file just use the -o to output to STDOUT.
 
-Product Description:
+# Product Description:
 This script validates flat authority marc files.
 Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
 
-Repository Information:
+# Repository Information:
 This product is under version control using Git.
 
-Dependencies:
+# Dependencies:
 None
 
-Known Issues:
+# Known Issues:
 The investigations are as follows.
 I cannot find any connection between the authorities that were loaded and those the authority ids we have in the system.
 Let us break the problem down by focusing on a NAME authority returned from BSLW:
-
+```bash
 $ grep "Leonard Williams" *.flat
 ALLAUTHORITIES.flat:.100. 1 |aLevy, Leonard Williams,|d1923-
 ALLAUTHORITIES.flat:.400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
 BIB.flat:.100. 1 |aLevy, Leonard Williams,|d1923-
 NAME.flat:.100. 1 |aLevy, Leonard Williams,|d1923-
 NAME.flat:.400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
+```
+
 
 == snip ==
+```bash
 *** DOCUMENT BOUNDARY ***
 FORM=PERSONAL
 .000. |az n 0n
@@ -89,9 +96,14 @@ FORM=PERSONAL
 .670.   |aHis  Emergence of a free press.
 .670.   |aLCNA 1977-1984.
 *** DOCUMENT BOUNDARY ***
-== snip ==
+...
+```
+== snip ==  
+
 or from marc edit:
-== snip ==
+
+== snip ==  
+```bash
 =LDR  00380nz   2200133n  4500
 =001  000000193160
 =003  CaOOAMICUS
@@ -102,9 +114,11 @@ or from marc edit:
 =400  1\$wna$aLevy, Leonard W.$q(Leonard Williams),$d1923-
 =670  \\$aHis  Emergence of a free press.
 =670  \\$aLCNA 1977-1984.
+```
 == snip ==
 
 So let us have a look at the record in Workflows:
+```bash
 Authority ID:	        000000193160
 Record format:	        Personal name headings
 Source:	                CaOOP
@@ -128,15 +142,19 @@ Tag	Ind.	Contents
 400	1	|wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
 670		His Emergence of a free press.
 670		LCNA 1977-1984.
+```
 
 Earlier I created a list of all our authority keys and ids with:
+```bash
  selauthority -oKF > AllAuthKeysAndIDs.lst
+```
 so:
+```bash
 grep 000000193160 AllAuthKeysAndIDs.lst
 558724|000000193160    |
-
+```
 therefore:
-
+```bash
 echo 558724 | authdump
 Symphony $<authority:u> $<dump> 3.4.1 $<started_on> $<tuesday:u>, $<december:u> 23, 2014, 11:30 AM
 $(9031)
@@ -155,8 +173,9 @@ FORM=PERSONAL
 .670. |aLCNA 1977-1984.
   1 $<authority> $(1303)
 Symphony $<authority:u> $<dump> $<finished_on> $<tuesday:u>, $<december:u> 23, 2014, 11:30 AM
-
+```
 if we isolate the dumped record and the flat file provided from BSLW here is what we get:
+```bash
 diff Levy_DUMP.flat Levy_BSLW.flat
 2,12c2,12
 < FORM=PERSONAL
@@ -182,11 +201,12 @@ diff Levy_DUMP.flat Levy_BSLW.flat
 > .400. 1 |wna|aLevy, Leonard W.|q(Leonard Williams),|d1923-
 > .670.   |aHis  Emergence of a free press.
 > .670.   |aLCNA 1977-1984.
-
+```
 Meaning that the flat files are completely different on every line. Since we do not see
 any difference visually lets take a look at the binary files:
 
 Viewing the binary version of the flat file dumped from Symphony we see:
+```bash
 cat Levy_DUMP.flat | od -a
 0000000   *   *   *  sp   D   O   C   U   M   E   N   T  sp   B   O   U
 0000020   N   D   A   R   Y  sp   *   *   *  nl   F   O   R   M   =   P
@@ -239,16 +259,19 @@ cat Levy_BSLW.flat | od -a
 0000540  sp  sp  sp   |   a   L   C   N   A  sp   1   9   7   7   -   1
 0000560   9   8   4   .  sp  nl
 0000566
-
+```
 Notice how all the lines in the dump file contain:
+```bash
 .   0   0   1   .  sp   |  a   0   0   0   0   0   0   1   9   3   1   6   0  nl
+```
 and in BSLW contains:
+```bash
 .   0   0   1   .  sp   |  a   0   0   0   0   0   0   1   9   3   1   6   0  sp  nl
-
+```
 Technically the trailing empty space (not the nl) is part of the naming pattern.
 I am now going to test the effects of this with an experiment. I have modified
 the BSLW flat file with some minor edits and reloaded it.
-
+```bash
 cat Levy_LOAD.flat | authload -fc -mu
 Symphony $<authority> $<load> 3.4.1 $<started_on> $<tuesday:u>, $<december:u> 23, 2014, 12:19 PM
 $(9180)
@@ -280,11 +303,11 @@ FORM=PERSONAL
 .670. |aLCNA 1977-1984.
   1 $<authority> $(1303)
 Symphony $<authority:u> $<dump> $<finished_on> $<tuesday:u>, $<december:u> 23, 2014, 12:20 PM
-
+```
 And the file matches so the conclusion is trailing white space has no effect on matching numeric authority ids.
 After some more testing and bug fixes I perform the following experiment.
 I preload all the authorities sent by BSLW. I then load the updated authorities for NAMEs with:
-
+```bash
 cat test.flat | ./authority.pl -p"./total.flat"
 ...
 **warning: ambiguous authority id, 001='n 2012048589', 016='1022H5849'
@@ -294,11 +317,15 @@ Analysis:
                  016:      38
                match:       0
                  001:     195
-Searching for 2012048589 in all the authority IDs we have loaded we find:
+```
+Searching for `2012048589` in all the authority IDs we have loaded we find:
+```bash
 grep 2012048589 AllAuthKeysAndIDs.lst
 800468|N2012048589     |
+```
 It appears that Symphony has UC and removed white space from the authority ID on load.
 To test I create a flat file for myself:
+```bash
  cat andrew.flat
 *** DOCUMENT BOUNDARY ***
 FORM=PERSONAL
@@ -327,10 +354,11 @@ $(9182)
   1 $<authority> $(1404)
   0 $<authority> $(1405)
 Symphony $<authority> $<load> $<finished_on> $<tuesday:u>, $<december:u> 23, 2014, 1:35 PM
-
+```
 
 
 search for 'NANDREW001' and find:
+```bash
 000	 	*****nz**********n******
 001	 	n ANDREW001
 003	 	CaOOAMICUS
@@ -371,7 +399,9 @@ $(9182)
   
 THE KEYS MATCH when I 'NANDREW001', 'n ANDREW001'
 ...
+```
 typical id without processing:'nr 98023852' 
+```bash
 ...
 Analysis:
    update-auth count:     195
@@ -381,7 +411,9 @@ Analysis:
                  001:     195
 
 ...
+```
 typical id with processing:'NR98023852'
+```bash
 ...
 Analysis:
    update-auth count:     195
@@ -393,12 +425,15 @@ Analysis:
 				 
 				 
 =============================
-
-Loading
+```
+## Loading
 
 Once fixed loading takes place with:
-  cat NAME.CHG.mrc.fix.flat | authload -fc -mb
-which overlays matching records matching on 001 (-fc) and update if possible, and create otherwise (-mb)
+```bash
+cat NAME.CHG.mrc.fix.flat | authload -fc -mb
+```
+which overlays matching records matching on `001` (`-fc`) and update if possible, and create otherwise (`-mb`)
+```bash
  ...
  907123|
  907124|
@@ -420,11 +455,11 @@ FORM=PERSONAL
   3733 $<authority> $(1404)
   7497 $<authority> $(1405)
 Symphony $<authority> $<load> $<finished_on> $<tuesday:u>, $<december:u> 30, 2014, 10:46 AM
+```
 
-======================
-Things to think about for production.
+## Things to think about for production
 
-If you normalize a flat file and then load it, the authority will have a 001 field normalized, which BSLW 
+If you normalize a flat file and then load it, the authority will have a `001` field normalized, which BSLW 
 will not be able to match again in the futre.
 
 Process suggestion: use selauthority to output all our existing keys and authids, then use the -i to separate 
@@ -437,7 +472,9 @@ In addition:
 So now we want to send an update and Chris recommends that we run the flat file he created as a dump through
 the script. The flat file is a dump of our authority table so it should match 100% since we are comparing our
 authorities with our authorities, but...
-== snip ==\*warning: failed to match 'BIK-4340'
+== snip ==
+```bash
+\*warning: failed to match 'BIK-4340'
 *warning: failed to match 'AMX-3455'
 Analysis:
            PERSONAL :    3072
@@ -456,15 +493,17 @@ Analysis:
                  001:    7220
           CORPORATE :     443
 percent match: 42.05
+```
 == snip ==
 
-Why the 42% match? Turns out Chris had dumped the authorities with auth id in the 035. Fixed and run again, we got the 
+Why the **42%** match? Turns out Chris had dumped the authorities with auth id in the 035. Fixed and run again, we got the 
 same results. Why?
 
 Turns out that when you dump an authority with 'authdump -ki001 it puts an additional 001 field into the flat file but 
 at least it is predictable, that is the real auth id is in the first field.
 
-Then I had to modify the script to not process any second or greater 001 fields. Once done we get much better results:
+Then I had to modify the script to not process any second or greater `001` fields. Once done we get much better results:
+```bash
 *warning: ambiguous authority id, 001='XX904649', 016='0072D6091'
 *warning: ambiguous authority id, 001='XX904649', 016='0072D6091'
 *warning: ambiguous authority id, 001='N2011071231', 016='1022B1490'
@@ -489,15 +528,17 @@ Analysis:
                  001:    7220
           CORPORATE :     443
 percent match: 99.97
-
-NOTE:
+```
+## NOTE:
 The 'N96014505T' is a poorly modified record that accidentally had a 't' attached. Once attached there is no way to 
 remove it that I can think of. WF does not find it to fix it, and you cannot overlay the flat file because the match
 is on the 001 field; the field you are trying to fix. I created a ticket with SD to fix and now that is done.
 
-======= related email ========
+### related email
 This email sent to Stephanie Hansen on Jan 7, 2015.
+
 == snip ==
+```
 Here is a sample MARC file of our adds and changes from May 1 2014 inclusive. 
 
 As we discussed, when I dump a specific authority such as ‘n  94091369‘, requesting the system place the authority ID in tag 001 I get:
@@ -521,9 +562,10 @@ FORM=PERSONAL
 I want to confirm that BSLW will select the first 001 as a match point, and secondly that BSLW can run the 
 script you mentioned in our phone conversation to match authorities stored in your database when comparing 
 001 match; in this case matching on your stored value  ‘n  94091369‘.
+```
 == snip ==
 
-== More on Authority Updates ==
+## More on Authority Updates
 Once we got the correct records back from BSLW, we loaded them and throttled adutext to index only 20,000 records.
 
 
@@ -534,6 +576,7 @@ additional 6 hours. Also because the bibs were touched, the OCLC update was unus
 Reports on adutext performance:
 On test machine we are going to set up some experiments. I am first loading all TITLE.NEW.MRC, and SERIES.NEW.MRC
 that BSLW gave us with the exact same process except that I am not sorting the keys in the authedit.keys file.
+```bash
 Symphony $<authority> $<load> $<finished_on> $<tuesday:u>, $<february:u> 24, 2015, 4:21 PM
 [authbot.sh] copying AllAuth.keys to /s/sirsi/Unicorn/Work/Batchkeys/authedit.keys
 [authbot.sh] successful.
@@ -552,22 +595,23 @@ bash-3.2$ ls /s/sirsi/Unicorn/Work/Batchkeys/authedit.keys
 bash-3.2$ ls
 AllAuth.keys               authbot.sh                 bibmatchpoint.sh           fix.flat.err               log.txt                    NAME.NEW.MRC               prepmarc.sh                SUBJ.NEW.MRC
 AllAuthKeysAndIDs.lst      authority.pl               fix.flat                   fix.flat.err.TITLE.SERIES  Makefile                   NAME.NEW.MRC.flat          SERIES.NEW.MRC             SUBJ.NEW.MRC.flat
-
+```
 Testing on production shows a big hump of time used by adutext by night over the nights that subj ran. Tests on test 
 machine show no such hump when all the keys are randomized.
 
 More to follow.
 
-authority.pl - fixes flat files by normalizing them and reports on key metrics for this type of file.
-prepmarc.sh  - prepares MARC files in to flat files and conditionally handles DEL.MRC files. Both this script and authority.pl
+`authority.pl` - fixes flat files by normalizing them and reports on key metrics for this type of file.
+`prepmarc.sh`  - prepares MARC files in to flat files and conditionally handles DEL.MRC files. Both this script and authority.pl
        are safe to run by hand any time, as they do not modify the ILS in any way.
-authbot.sh   - is a driver script that runs prepmarc.sh and authority.pl in a coordinated fashion. It if prepmarc.sh produces
+`authbot.sh`   - is a driver script that runs prepmarc.sh and authority.pl in a coordinated fashion. It if prepmarc.sh produces
        a DEL.MRC.keys file it will use remauthority to remove the authorities. If a fix.flat file exists, it will load the 
        flat file with authload with switches to update if possible and create anything it can't find.
 	   
 	   
-== More issues ==
+## Issues
 Staff have noticed some problems: 
+```bash
 bash-3.2$ echo 1386471 | catalogdump -om | convMarc -tu
 Symphony $<catalog:u> $<dump> 3.4.1 $<started_on> $<wednesday:u>, $<april:u> 8, 2015, 4:38 PM
 $(1222)
@@ -591,8 +635,7 @@ zRead it Online.uhttp://atoz.ebsco.com/direct.asp?id=8717&reso1 MARC records rea
 urceid=106803
 
 
-cat key
-1386471|
+cat key 1386471
 bash-3.2$ echo ebs106803e | selcatalog -iF | catalogdump -oF
 Symphony $<catalog> $<selection> 3.4.1 $<started_on> $<wednesday:u>, $<april:u> 8, 2015, 4:47 PM
 $(2271)
@@ -639,11 +682,12 @@ FORM=SERIAL
   1 $<bib> $<MARC> $(1303)
   0 $<item> $(1303)
 Symphony $<catalog:u> $<dump> $<finished_on> $<wednesday:u>, $<april:u> 8, 2015, 4:47 PM
+```
+Notice how Montreal is spelt correctly in tag `222` but incorrectly in the `780`.
 
-Notice how Montreal is spelt correctly in tag 222 but incorrectly in the 780.
-
-This is what we sent to BSLW: '20150320_EPL_Catalog_Records.flat'
+This is what we sent to BSLW: '`20150320_EPL_Catalog_Records.flat`'
 Line No.
+```bash
 4312399 *** DOCUMENT BOUNDARY ***
 4312400 FORM=LCSH
 4312401 .000. |aas2 0c
@@ -670,11 +714,11 @@ Line No.
 4312422 .780. 00|tMontraeal gazette|x0839-3257
 4312423 .856. 4 |zRead it Online.|uhttp://atoz.ebsco.com/direct.asp?id=8717&resourceid=106803
 4312424 .596.   |a1
-
+```
 To fix this I have started to reverse engineer the way that ANSEL is corrupted on output.
 
-Prepmarc.sh issues
-------------------
+## Prepmarc.sh issues
+```bash
  ...
 @@PBK#xFICTION#zJUVENILE#  #aChildren's fiction - Series A#vPBK#wASIS#i312211160
 @@57998#lJPBKSER#mEPLZORDER#p4.53#tJPBK#xFICTION#zJUVENILE#  #aChildren's fictio
@@ -718,3 +762,4 @@ drwx------   4 sirsi    sirsi          4 Mar  2  2015 ..
 -rwx------   1 sirsi    sirsi        681 Jul 22  2015 Makefile
 -rwx------   1 sirsi    sirsi       6256 May 13 10:21 prepmarc.sh
  ...
+ ```
